@@ -1,5 +1,7 @@
 {% extends '_base.html' %}
 {% load form_helpers %}
+{% load account socialaccount %}
+
 
 {% block content %}
 <div class="row" style="margin-top: {% if settings.BANNER_LOGIN %}100{% else %}150{% endif %}px;">
@@ -23,6 +25,14 @@
                     <strong>Log In</strong>
                 </div>
                 <div class="panel-body">
+                    {% get_providers as socialaccount_providers %}
+                    {% if socialaccount_providers %}
+                        <div class="socialaccount_ballot">
+                            <ul class="socialaccount_providers">
+                                {% include "extras/provider_list.html" with process="login" %}
+                            </ul>
+                        </div>
+                    {% endif %}
                     {% csrf_token %}
                     {% if 'next' in request.GET %}<input type="hidden" name="next" value="{{ request.GET.next }}" />{% endif %}
                     {% if 'next' in request.POST %}<input type="hidden" name="next" value="{{ request.POST.next }}" />{% endif %}
