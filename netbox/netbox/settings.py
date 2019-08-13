@@ -160,9 +160,14 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
+    'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.github',
     'cacheops',
     'corsheaders',
     'debug_toolbar',
@@ -234,6 +239,8 @@ TEMPLATES = [
 # Authentication
 AUTHENTICATION_BACKENDS = [
     'utilities.auth_backends.ViewExemptModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 # Internationalization
@@ -390,6 +397,19 @@ PROMETHEUS_EXPORT_MIGRATIONS = False
 FILTERS_NULL_CHOICE_LABEL = 'None'
 FILTERS_NULL_CHOICE_VALUE = 'null'
 
+
+#
+# Django Site
+#
+
+SITE_ID = 1
+
+#
+# Django Allauth
+#
+
+ACCOUNT_DEFAULT_HTTP_PROTOCOL='https'
+LOGIN_REDIRECT_URL = 'home'
 
 #
 # Django REST framework (API)

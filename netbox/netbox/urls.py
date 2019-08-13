@@ -31,6 +31,9 @@ _patterns = [
     path(r'login/', LoginView.as_view(), name='login'),
     path(r'logout/', LogoutView.as_view(), name='logout'),
 
+    # AllAuth
+    path(r'accounts/', include('allauth.urls')),
+
     # Apps
     path(r'circuits/', include('circuits.urls')),
     path(r'dcim/', include('dcim.urls')),
