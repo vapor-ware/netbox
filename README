@@ -1,0 +1,18 @@
+# Vapor's HARD FORK of Netbox
+
+![fork off](https://news.bitcoin.com/wp-content/uploads/2016/02/photo_2016-02-21_18-51-01.jpg)
+
+## Branch layout
+
+| Branch | Purpose |
+| ------ | ------- |
+| *master* | Last point of sync with upstream. Should remain untouched |
+| *develop* | Base branch used for all new feature branches. PR target |
+| *stable* | Code currently running in production |
+
+## Developing
+
+```
+docker-compose?
+```
+
