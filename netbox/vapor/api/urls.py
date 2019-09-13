@@ -14,6 +14,7 @@ class VaporRootView(routers.APIRootView):
 router = routers.DefaultRouter()
 router.APIRootView = VaporRootView
 
+router.register(r'customers', views.CustomerViewSet)
+
 app_name = 'vapor-api'
 urlpatterns = router.urls
-
