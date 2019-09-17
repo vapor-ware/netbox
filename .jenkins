@@ -1,0 +1,69 @@
+pipeline {
+
+  /*
+  # Setup an agent dynamically using the following podspec. Netbox requires
+  # redis and postgres by default (they've disabled all the other backend drivers
+  # so we'll tack those on to the pods with some sane defaults.
+  # Note: this targets units on the vapor-build cluster (implicit) This may not be
+  # desireable in the case of building docker images.
+  */
+  agent {
+    kubernetes {
+      defaultContainer 'jnlp'
+      yaml """
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    jenkins/job: netbox
+spec:
+  containers:
+  - name: python
+    image: vaporio/jenkins-agent-python36:latest
+    command:
+    - cat
+    tty: true
+  - name: postgres
+    image: postgres:10
+    env:
+    - name: POSTGRES_USER
+      value: netbox
+    - name: POSTGRES_PASSWORD
+      value: netbox
+  - name: redis
+    image: redis:latest
+  nodeSelector:
+    cloud.google.com/gke-nodepool: jenkins
+  tolerations:
+  - key: role
+    operator: Equal
+    value: jenkins
+    effect: NoSchedule
+"""
+    }
+  }
+  stages {
+    stage('Test') {
+      steps {
+        container('python') {
+          /*
+          # in the netbox/netbox path there is an example configuration file
+          # clone this file and set up a permissive configuration for CI
+          # using the values we declared in the podspec
+          */
+          dir('netbox/netbox') {
+              sh """
+              cp configuration.example.py configuration.py
+              sed -i -e "s/ALLOWED_HOSTS = .*/ALLOWED_HOSTS = ['*']/g" configuration.py
+              sed -i -e "s/SECRET_KEY = .*/SECRET_KEY = 'netboxci'/g" configuration.py
+              sed -i -e "s/USER': .*/USER': 'netbox',/g" configuration.py
+              sed -i -e "s/PASSWORD': .*/PASSWORD': 'netbox',/g" configuration.py
+              """
+          }
+          // finally, kick off tox to run the entire test suite
+          sh 'tox'
+        }
+      }
+    }
+  }
+}
