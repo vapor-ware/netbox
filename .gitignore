@@ -11,8 +11,9 @@
 !upgrade.sh
 fabfile.py
 *.swp
-gunicorn_config.py
 .DS_Store
 .vscode
 .venv
 .tox
+gunicorn_config.py
+!docker/configuration/gunicorn_config.py
