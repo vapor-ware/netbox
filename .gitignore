@@ -16,3 +16,4 @@ gunicorn_config.py
 .vscode
 .venv
 .tox
+!docker/configuration/gunicorn_config.py
