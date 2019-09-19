@@ -1,6 +1,6 @@
 library identifier: 'vapor@master', retriever: modernSCM(
 [$class: 'GitSCMSource',
-remote: 'git@github.com:vapor-ware/ci-shared.git',
+remote: 'https://github.com/vapor-ware/ci-shared.git',
 credentialsId: 'vio-bot-gh'])
 
 toxPipeline{
