@@ -1,0 +1,12 @@
+version: '2'
+services:
+  postgres:
+    image: "postgres:9.6"
+    environment:
+      POSTGRES_PASSWORD: "12345"
+    ports:
+      - 5432:5432
+  redis:
+    image: "redis"
+    ports:
+      - 6379:6379

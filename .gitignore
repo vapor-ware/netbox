@@ -14,3 +14,7 @@ fabfile.py
 gunicorn_config.py
 .DS_Store
 .vscode
+.venv
+.tox
+!docker/configuration/gunicorn_config.py
+.coverage
