@@ -1,12 +1,38 @@
-version: '2'
+version: '3'
 services:
   postgres:
     image: "postgres:9.6"
     environment:
       POSTGRES_PASSWORD: "12345"
+      POSTGRES_DB: netbox
     ports:
-      - 5432:5432
+    - 5432:5432
   redis:
     image: "redis"
+  nginx:
+    image: "nginx"
+    volumes:
+    - "static:/opt/netbox/netbox/static"
+    - "./docker/nginx.conf:/etc/nginx/nginx.conf"
     ports:
-      - 6379:6379
+    - 8000:80
+  netbox:
+    image: "vaporio/netbox:develop.5"
+    environment:
+      SECRET_KEY: secret
+      DB_HOST: postgres
+      DB_USER: postgres
+      DB_PASSWORD: "12345"
+      ALLOWED_HOSTS: "*"
+      REDIS_HOST: redis
+    depends_on:
+    - redis
+    - postgres
+    volumes:
+    - "./netbox:/opt/netbox/netbox"
+    - "static:/opt/netbox/netbox/static"
+    - "./docker/configuration.docker.py:/opt/netbox/netbox/netbox/configuration.py"
+    - "./docker/startup_scripts/:/opt/netbox/startup_scripts"
+    - "./docker/initializers/:/opt/netbox/initializers"
+volumes:
+  static:

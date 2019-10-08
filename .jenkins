@@ -71,11 +71,11 @@ spec:
           */
           dir('netbox/netbox') {
             sh """
-            cp configuration.example.py configuration.py
-            sed -i -e "s/ALLOWED_HOSTS = .*/ALLOWED_HOSTS = ['*']/g" configuration.py
-            sed -i -e "s/SECRET_KEY = .*/SECRET_KEY = 'netboxci'/g" configuration.py
-            sed -i -e "s/USER': .*/USER': 'netbox',/g" configuration.py
-            sed -i -e "s/PASSWORD': .*/PASSWORD': 'netbox',/g" configuration.py
+              cp configuration.example.py configuration.py
+              sed -i -e "s/ALLOWED_HOSTS = .*/ALLOWED_HOSTS = ['*']/g" configuration.py
+              sed -i -e "s/SECRET_KEY = .*/SECRET_KEY = 'netboxci'/g" configuration.py
+              sed -i -e "s/USER': .*/USER': 'netbox',/g" configuration.py
+              sed -i -e "s/PASSWORD': .*/PASSWORD': 'netbox',/g" configuration.py
             """
           }
           // finally, kick off tox to run the entire test suite
@@ -92,8 +92,11 @@ spec:
           changeRequest()
         }
       }
+      environment {
+        BASE_TAG = getSafeBranchName()
+      }
       agent {
-          label 'docker-build'
+        label 'docker-build'
       }
       steps {
         container('docker') {
@@ -106,10 +109,12 @@ spec:
               --build-arg BUILD_VERSION=${BUILD_TAG} \
               --build-arg BRANCH=${BRANCH_NAME} \
               -t ${IMAGE}:${TAG}
-            '''
-            withDockerRegistry(registry: [credentialsId: 'vio-docker-hub']) {
-              sh "docker push ${env.IMAGE}:${env.TAG}"
-            }
+          '''
+          sh 'docker tag ${IMAGE}:${TAG} ${IMAGE}:${BASE_TAG}'
+          withDockerRegistry(registry: [credentialsId: 'vio-docker-hub']) {
+            sh "docker push ${env.IMAGE}:${env.TAG}"
+            sh "docker push ${env.IMAGE}:${env.BASE_TAG}"
+          }
         }
       }
     }

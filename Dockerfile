@@ -69,7 +69,6 @@ RUN wget -q -O - "${URL}" | tar xz \
 
 COPY docker/configuration.docker.py /opt/netbox/netbox/netbox/configuration.py
 COPY docker/configuration/gunicorn_config.py /etc/netbox/config/
-COPY docker/nginx.conf /etc/netbox-nginx/nginx.conf
 COPY docker/docker-entrypoint.sh /opt/netbox/docker-entrypoint.sh
 COPY docker/startup_scripts/ /opt/netbox/startup_scripts/
 COPY docker/initializers/ /opt/netbox/initializers/

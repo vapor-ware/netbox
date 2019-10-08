@@ -71,10 +71,10 @@ class VaporTestInterfaces(APITestCase):
             tenant=cls.customer1,
         )
         cls.device2 = Device.objects.create(
-             name='network-locker2',
-             device_role=cls.devicerole1,
-             device_type=cls.devicetype1,
-             site=cls.site1,
+            name='network-locker2',
+            device_role=cls.devicerole1,
+            device_type=cls.devicetype1,
+            site=cls.site1,
         )
         cls.interface1 = Interface.objects.create(name='e1', device=cls.device1)
         cls.interface2 = Interface.objects.create(name='xe-0/0/0', device=cls.device2)
