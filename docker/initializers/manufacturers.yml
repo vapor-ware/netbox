@@ -1,6 +1,18 @@
-# - name: Manufacturer 1
-#   slug: manufacturer-1
-# - name: Manufacturer 2
-#   slug: manufacturer-2
-# - name: NoName
-#   slug: noname
+- name: ASRock Inc.
+  slug: asrock-inc
+- name: BasX
+  slug: basx
+- name: Eaton
+  slug: eaton
+- name: eGauge Systems, LLC
+  slug: egauge-systems-llc
+- name: Flex, LTD
+  slug: flex-ltd
+- name: HID Global Corporation
+  slug: hid-global-corporation
+- name: Juniper Networks, Inc
+  slug: juniper-networks-inc
+- name: Ubiquiti Networks, Inc
+  slug: ubiquiti-networks-inc
+- name: Vapor, IO
+  slug: vapor

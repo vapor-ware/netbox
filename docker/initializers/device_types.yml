@@ -1,23 +1,25 @@
-# - model: Model 1
-#   manufacturer: Manufacturer 1
-#   slug: model-1
-#   u_height: 2
-#   custom_fields:
-#     text_field: Description
-# - model: Model 2
-#   manufacturer: Manufacturer 1
-#   slug: model-2
-#   custom_fields:
-#     text_field: Description
-# - model: Model 3
-#   manufacturer: Manufacturer 1
-#   slug: model-3
-#   is_full_depth: false
-#   u_height: 0
-#   custom_fields:
-#     text_field: Description
-# - model: Other
-#   manufacturer: NoName
-#   slug: other
-#   custom_fields:
-#     text_field: Description
+- is_full_depth: 'True'
+  manufacturer: ASRock Inc.
+  model: IMB-1213
+  slug: asrock-imb-1213
+  u_height: 0
+- is_full_depth: 'True'
+  manufacturer: Flex, LTD
+  model: 9U Locker
+  slug: 9u-locker
+  u_height: 9
+- is_full_depth: 'True'
+  manufacturer: Juniper Networks, Inc
+  model: QFX5120-48Y-8C
+  slug: qfx5120-48y-8c
+  u_height: 1
+- manufacturer: Vapor, IO
+  model: VEC Cartridge Rev 3.0
+  part_number: '700747'
+  slug: vec-cart-v3
+  u_height: 0
+- manufacturer: Vapor, IO
+  model: VEC Sled v2
+  slug: vec-sled-v2
+  subdevice_role: True
+  u_height: 1

@@ -1,27 +1,267 @@
-# - name: server01
-#   device_role: server
-#   device_type: Other
-#   site: AMS 1
-#   rack: rack-01
-#   face: Front
-#   position: 1
-#   custom_fields:
-#     text_field: Description
-# - name: server02
-#   device_role: server
-#   device_type: Other
-#   site: AMS 2
-#   rack: rack-02
-#   face: Front
-#   position: 2
-#   custom_fields:
-#     text_field: Description
-# - name: server03
-#   device_role: server
-#   device_type: Other
-#   site: SING 1
-#   rack: rack-03
-#   face: Front
-#   position: 3
-#   custom_fields:
-#     text_field: Description
+- device_role: Access Switch
+  device_type: QFX5120-48Y-8C
+  name: EFR1.TEST0.GCP
+  site: Test Site (TEST0.GCP)
+  face: Front
+- device_role: Access Switch
+  device_type: QFX5120-48Y-8C
+  name: EFR2.TEST0.GCP
+  face: Front
+  site: Test Site (TEST0.GCP)
+
+
+- device_role: Customer Compute Locker
+  face: Front
+  device_type: 9U Locker
+  name: L1A.W1.TEST0.GCP
+  position: 1
+  rack: W1 Zone A
+  site: Test Site (TEST0.GCP)
+- device_role: Customer Network Locker
+  face: Front
+  device_type: 9U Locker
+  name: L1B.W1.TEST0.GCP
+  position: 1
+  rack: W1 Zone B
+  site: Test Site (TEST0.GCP)
+
+
+- device_role: Customer Compute Locker
+  face: Front
+  device_type: 9U Locker
+  name: L2A.W1.TEST0.GCP
+  position: 10
+  rack: W1 Zone A
+  site: Test Site (TEST0.GCP)
+- device_role: Customer Network Locker
+  face: Front
+  device_type: 9U Locker
+  name: L2B.W1.TEST0.GCP
+  position: 10
+  rack: W1 Zone B
+  site: Test Site (TEST0.GCP)
+
+
+- device_role: Customer Compute Locker
+  face: Front
+  device_type: 9U Locker
+  name: L3A.W1.TEST0.GCP
+  position: 19
+  rack: W1 Zone A
+  site: Test Site (TEST0.GCP)
+- device_role: Customer Network Locker
+  face: Front
+  device_type: 9U Locker
+  name: L3B.W1.TEST0.GCP
+  position: 19
+  rack: W1 Zone B
+  site: Test Site (TEST0.GCP)
+
+
+- device_role: Customer Compute Locker
+  face: Front
+  device_type: 9U Locker
+  name: L4A.W1.TEST0.GCP
+  position: 28
+  rack: W1 Zone A
+  site: Test Site (TEST0.GCP)
+- device_role: Customer Network Locker
+  face: Front
+  device_type: 9U Locker
+  name: L4B.W1.TEST0.GCP
+  position: 28
+  rack: W1 Zone B
+  site: Test Site (TEST0.GCP)
+
+
+- device_role: Customer Compute Locker
+  face: Front
+  device_type: 9U Locker
+  name: L1A.W2.TEST0.GCP
+  position: 1
+  rack: W2 Zone A
+  site: Test Site (TEST0.GCP)
+- device_role: Customer Network Locker
+  face: Front
+  device_type: 9U Locker
+  name: L1B.W2.TEST0.GCP
+  position: 1
+  rack: W2 Zone B
+  site: Test Site (TEST0.GCP)
+
+
+- device_role: Customer Compute Locker
+  face: Front
+  device_type: 9U Locker
+  name: L2A.W2.TEST0.GCP
+  position: 10
+  rack: W2 Zone A
+  site: Test Site (TEST0.GCP)
+- device_role: Customer Network Locker
+  face: Front
+  device_type: 9U Locker
+  name: L2B.W2.TEST0.GCP
+  position: 10
+  rack: W2 Zone B
+  site: Test Site (TEST0.GCP)
+
+
+- device_role: Customer Compute Locker
+  face: Front
+  device_type: 9U Locker
+  name: L3A.W2.TEST0.GCP
+  position: 19
+  rack: W2 Zone A
+  site: Test Site (TEST0.GCP)
+- device_role: Customer Network Locker
+  face: Front
+  device_type: 9U Locker
+  name: L3B.W2.TEST0.GCP
+  position: 19
+  rack: W2 Zone B
+  site: Test Site (TEST0.GCP)
+
+
+- device_role: Customer Compute Locker
+  face: Front
+  device_type: 9U Locker
+  name: L4A.W2.TEST0.GCP
+  position: 28
+  rack: W2 Zone A
+  site: Test Site (TEST0.GCP)
+- device_role: Customer Network Locker
+  face: Front
+  device_type: 9U Locker
+  name: L4B.W2.TEST0.GCP
+  position: 28
+  rack: W2 Zone B
+  site: Test Site (TEST0.GCP)
+
+
+- device_role: Customer Compute Locker
+  face: Front
+  device_type: 9U Locker
+  name: L1A.W3.TEST0.GCP
+  position: 1
+  rack: W3 Zone A
+  site: Test Site (TEST0.GCP)
+- device_role: Customer Network Locker
+  face: Front
+  device_type: 9U Locker
+  name: L1B.W3.TEST0.GCP
+  position: 1
+  rack: W3 Zone B
+  site: Test Site (TEST0.GCP)
+
+
+- device_role: Customer Compute Locker
+  face: Front
+  device_type: 9U Locker
+  name: L2A.W3.TEST0.GCP
+  position: 10
+  rack: W3 Zone A
+  site: Test Site (TEST0.GCP)
+- device_role: Customer Network Locker
+  face: Front
+  device_type: 9U Locker
+  name: L2B.W3.TEST0.GCP
+  position: 10
+  rack: W3 Zone B
+  site: Test Site (TEST0.GCP)
+
+
+- device_role: Customer Compute Locker
+  face: Front
+  device_type: 9U Locker
+  name: L3A.W3.TEST0.GCP
+  position: 19
+  rack: W3 Zone A
+  site: Test Site (TEST0.GCP)
+- device_role: Customer Network Locker
+  face: Front
+  device_type: 9U Locker
+  name: L3B.W3.TEST0.GCP
+  position: 19
+  rack: W3 Zone B
+  site: Test Site (TEST0.GCP)
+
+
+- device_role: Customer Compute Locker
+  face: Front
+  device_type: 9U Locker
+  name: L4A.W3.TEST0.GCP
+  position: 28
+  rack: W3 Zone A
+  site: Test Site (TEST0.GCP)
+- device_role: Customer Network Locker
+  face: Front
+  device_type: 9U Locker
+  name: L4B.W3.TEST0.GCP
+  position: 28
+  rack: W3 Zone B
+  site: Test Site (TEST0.GCP)
+
+
+- device_role: Customer Compute Locker
+  face: Front
+  device_type: 9U Locker
+  name: L1A.W4.TEST0.GCP
+  position: 1
+  rack: W4 Zone A
+  site: Test Site (TEST0.GCP)
+- device_role: Customer Network Locker
+  face: Front
+  device_type: 9U Locker
+  name: L1B.W4.TEST0.GCP
+  position: 1
+  rack: W4 Zone B
+  site: Test Site (TEST0.GCP)
+
+
+- device_role: Customer Compute Locker
+  face: Front
+  device_type: 9U Locker
+  name: L2A.W4.TEST0.GCP
+  position: 10
+  rack: W4 Zone A
+  site: Test Site (TEST0.GCP)
+- device_role: Customer Network Locker
+  face: Front
+  device_type: 9U Locker
+  name: L2B.W4.TEST0.GCP
+  position: 10
+  rack: W4 Zone B
+  site: Test Site (TEST0.GCP)
+
+
+- device_role: Customer Compute Locker
+  face: Front
+  device_type: 9U Locker
+  name: L3A.W4.TEST0.GCP
+  position: 19
+  rack: W4 Zone A
+  site: Test Site (TEST0.GCP)
+- device_role: Customer Network Locker
+  face: Front
+  device_type: 9U Locker
+  name: L3B.W4.TEST0.GCP
+  position: 19
+  rack: W4 Zone B
+  site: Test Site (TEST0.GCP)
+
+
+- device_role: Customer Compute Locker
+  face: Front
+  device_type: 9U Locker
+  name: L4A.W4.TEST0.GCP
+  position: 28
+  rack: W4 Zone A
+  site: Test Site (TEST0.GCP)
+
+- device_role: Customer Network Locker
+  face: Front
+  device_type: 9U Locker
+  name: L4B.W4.TEST0.GCP
+  position: 28
+  rack: W4 Zone B
+  site: Test Site (TEST0.GCP)
