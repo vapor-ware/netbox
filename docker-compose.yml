@@ -17,7 +17,7 @@ services:
     ports:
     - 8000:80
   netbox:
-    image: "vaporio/netbox:develop.5"
+    image: "vaporio/netbox:develop"
     environment:
       SECRET_KEY: secret
       DB_HOST: postgres
