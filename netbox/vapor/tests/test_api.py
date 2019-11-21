@@ -94,4 +94,4 @@ class VaporTestInterfaces(APITestCase):
         url = '{}?{}'.format(base_url, '&'.join(['{}={}'.format(k, v) for k, v in query.items()]))
         response = self.client.get(url, **self.header)
         self.assertEqual(response.data['count'], 1)
-        self.assertEqual(response.data['results'][0]['name'], self.interface2.name)
+        self.assertEqual(response.data['results'][0]['name'], self.interface1.name)
