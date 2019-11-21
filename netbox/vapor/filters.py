@@ -4,7 +4,7 @@ from django.db.models import Q
 from extras.filters import CustomFieldFilterSet
 from utilities.filters import NameSlugSearchFilterSet, NumericInFilter, TagFilter, MultiValueNumberFilter
 from tenancy.models import Tenant, TenantGroup
-from dcim.models import Device, DeviceRole, Interface
+from dcim.models import Site, Device, DeviceRole, Interface
 from dcim.api.serializers import (
     IFACE_TYPE_CHOICES,
     IFACE_MODE_CHOICES,
@@ -100,6 +100,13 @@ class InterfaceFilter(django_filters.FilterSet):
     type = django_filters.MultipleChoiceFilter(
         choices=IFACE_TYPE_CHOICES,
         null_value=None
+    )
+
+    site = django_filters.ModelMultipleChoiceFilter(
+        field_name='device__site__slug',
+        queryset=Site.objects.all(),
+        to_field_name='slug',
+        label='Device (slug)',
     )
 
     customer = django_filters.ModelMultipleChoiceFilter(
