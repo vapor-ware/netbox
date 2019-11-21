@@ -141,6 +141,8 @@ IFACE_TYPE_SUMMITSTACK512 = 5330
 
 # Other
 IFACE_TYPE_OTHER = 32767
+IFACE_TYPE_KEYSTONE = 32766
+
 
 IFACE_TYPE_CHOICES = [
     [
@@ -266,6 +268,7 @@ IFACE_TYPE_CHOICES = [
     [
         'Other',
         [
+            [IFACE_TYPE_KEYSTONE, 'Keystone'],
             [IFACE_TYPE_OTHER, 'Other'],
         ]
     ],
