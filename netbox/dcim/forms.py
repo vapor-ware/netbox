@@ -125,7 +125,7 @@ class MACAddressField(forms.Field):
 # Regions
 #
 
-class RegionForm(BootstrapMixin, forms.ModelForm):
+class RegionForm(BootstrapMixin, CustomFieldForm):
     slug = SlugField()
 
     class Meta:
@@ -160,7 +160,7 @@ class RegionCSVForm(forms.ModelForm):
         }
 
 
-class RegionFilterForm(BootstrapMixin, forms.Form):
+class RegionFilterForm(BootstrapMixin, CustomFieldFilterForm):
     model = Site
     q = forms.CharField(
         required=False,

@@ -57,13 +57,13 @@ class ConnectedEndpointSerializer(ValidatedModelSerializer):
 # Regions/sites
 #
 
-class RegionSerializer(serializers.ModelSerializer):
+class RegionSerializer(CustomFieldModelSerializer):
     parent = NestedRegionSerializer(required=False, allow_null=True)
     site_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Region
-        fields = ['id', 'name', 'slug', 'parent', 'site_count']
+        fields = ['id', 'name', 'slug', 'parent', 'site_count', 'custom_fields']
 
 
 class SiteSerializer(TaggitSerializer, CustomFieldModelSerializer):
