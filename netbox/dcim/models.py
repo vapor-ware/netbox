@@ -183,7 +183,7 @@ class CableTermination(models.Model):
 # Regions
 #
 
-class Region(MPTTModel, ChangeLoggedModel):
+class Region(MPTTModel, ChangeLoggedModel, CustomFieldModel):
     """
     Sites can be grouped within geographic Regions.
     """
@@ -201,6 +201,11 @@ class Region(MPTTModel, ChangeLoggedModel):
     )
     slug = models.SlugField(
         unique=True
+    )
+    custom_field_values = GenericRelation(
+        to='extras.CustomFieldValue',
+        content_type_field='obj_type',
+        object_id_field='obj_id'
     )
 
     csv_headers = ['name', 'slug', 'parent']

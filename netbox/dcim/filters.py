@@ -21,7 +21,7 @@ from .models import (
 )
 
 
-class RegionFilter(NameSlugSearchFilterSet):
+class RegionFilter(NameSlugSearchFilterSet, CustomFieldFilterSet):
     parent_id = django_filters.ModelMultipleChoiceFilter(
         queryset=Region.objects.all(),
         label='Parent region (ID)',

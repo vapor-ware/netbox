@@ -97,7 +97,7 @@ class CableTraceMixin(object):
 # Regions
 #
 
-class RegionViewSet(ModelViewSet):
+class RegionViewSet(CustomFieldModelViewSet):
     queryset = Region.objects.annotate(
         site_count=Count('sites')
     )
