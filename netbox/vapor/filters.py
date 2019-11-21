@@ -103,7 +103,7 @@ class InterfaceFilter(django_filters.FilterSet):
     )
 
     customer = django_filters.ModelMultipleChoiceFilter(
-        field_name='_connected_interface__device__tenant__slug',
+        field_name='device__tenant__slug',
         queryset=Tenant.objects.all(),
         to_field_name='slug',
         label='Customer (slug)',
