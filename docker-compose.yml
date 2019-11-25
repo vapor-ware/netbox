@@ -27,7 +27,6 @@ services:
       DB_PASSWORD: "12345"
       ALLOWED_HOSTS: "*"
       REDIS_HOST: redis
-      SKIP_STARTUP_SCRIPTS: "true"
     depends_on:
     - redis
     - postgres
