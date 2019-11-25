@@ -33,4 +33,4 @@ with file.open('r') as stream:
 
             interface, created = Interface.objects.get_or_create(name=name, device=locker, type=IFACE_TYPE_KEYSTONE)
             if created:
-                print("🔗 Created interface {} for {}".format(interface.name, locler.name))
+                print("🔗 Created interface {} for {}".format(interface.name, locker.name))
