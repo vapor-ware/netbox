@@ -118,5 +118,16 @@ spec:
         }
       }
     }
+    stage('Deployment'){
+      when {
+        branch 'develop'
+      }
+      steps {
+        build(
+          job: '/vapor-xyz/netbox-deploy-dev',
+          wait: true,
+        )
+      }
+    }
   }
 }
