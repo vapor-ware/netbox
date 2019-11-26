@@ -2449,7 +2449,7 @@ class InterfaceTest(APITestCase):
 
         self.assertEqual(
             sorted(response.data['results'][0]),
-            ['cable', 'connection_status', 'device', 'id', 'name', 'url']
+            ['cable', 'connection_status', 'device', 'id', 'name', 'type', 'url']
         )
 
     def test_create_interface(self):

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from dcim.constants import CONNECTION_STATUS_CHOICES
+from dcim.constants import CONNECTION_STATUS_CHOICES, IFACE_TYPE_CHOICES
 from dcim.models import (
     Cable, ConsolePort, ConsoleServerPort, Device, DeviceBay, DeviceType, DeviceRole, FrontPort, FrontPortTemplate,
     Interface, Manufacturer, Platform, PowerFeed, PowerOutlet, PowerPanel, PowerPort, Rack, RackGroup, RackRole,
@@ -203,10 +203,11 @@ class NestedInterfaceSerializer(WritableNestedSerializer):
     device = NestedDeviceSerializer(read_only=True)
     url = serializers.HyperlinkedIdentityField(view_name='dcim-api:interface-detail')
     connection_status = ChoiceField(choices=CONNECTION_STATUS_CHOICES, read_only=True)
+    type = ChoiceField(choices=IFACE_TYPE_CHOICES, required=False)
 
     class Meta:
         model = Interface
-        fields = ['id', 'url', 'device', 'name', 'cable', 'connection_status']
+        fields = ['id', 'url', 'device', 'name', 'cable', 'connection_status', 'type']
 
 
 class NestedRearPortSerializer(WritableNestedSerializer):
