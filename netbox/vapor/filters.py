@@ -73,6 +73,12 @@ class InterfaceFilter(django_filters.FilterSet):
         field_name='pk',
         label='Device (ID)',
     )
+    device_role = django_filters.ModelMultipleChoiceFilter(
+        field_name='device__device_role__slug',
+        queryset=DeviceRole.objects.all(),
+        to_field_name='slug',
+        label='Device Role (slug)',
+    )
     cabled = django_filters.BooleanFilter(
         field_name='cable',
         lookup_expr='isnull',
@@ -106,7 +112,7 @@ class InterfaceFilter(django_filters.FilterSet):
         field_name='device__site__slug',
         queryset=Site.objects.all(),
         to_field_name='slug',
-        label='Device (slug)',
+        label='Site (slug)',
     )
 
     customer = django_filters.ModelMultipleChoiceFilter(
