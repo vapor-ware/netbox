@@ -26,7 +26,6 @@ with file.open('r') as stream:
   optional_assocs = {
     'tenant': (Tenant, 'name'),
     'platform': (Platform, 'name'),
-    'rack': (Rack, 'name'),
     'cluster': (Cluster, 'name'),
     'primary_ip4': (IPAddress, 'address'),
     'primary_ip6': (IPAddress, 'address')
@@ -48,6 +47,9 @@ with file.open('r') as stream:
           query = { field: params.pop(assoc) }
 
           params[assoc] = model.objects.get(**query)
+
+      if 'rack' in params:
+        params['rack'] = Rack.objects.get(name=params.pop('rack'), site=params['site'].id)
 
       if 'face' in params:
         for rack_face in RACK_FACE_CHOICES:
