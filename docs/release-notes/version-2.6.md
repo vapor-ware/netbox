@@ -1,3 +1,40 @@
+# v2.6.9 (2019-12-16)
+
+## Enhancements
+
+* [#3152](https://github.com/netbox-community/netbox/issues/3152) - Include direct link to rack elevations on site view
+* [#3441](https://github.com/netbox-community/netbox/issues/3441) - Move virtual machine results near devices in global search
+* [#3761](https://github.com/netbox-community/netbox/issues/3761) - Added copy button for API tokens
+
+## Bug Fixes
+
+* [#2170](https://github.com/netbox-community/netbox/issues/2170) - Prevent the deletion of a virtual chassis when a cross-member LAG is present
+* [#2358](https://github.com/netbox-community/netbox/issues/2358) - Respect custom field default values when creating objects via the REST API
+* [#3749](https://github.com/netbox-community/netbox/issues/3749) - Fix exception on password change page for local users
+* [#3757](https://github.com/netbox-community/netbox/issues/3757) - Fix unable to assign IP to interface
+
+# v2.6.8 (2019-12-10)
+
+## Enhancements
+
+* [#3139](https://github.com/netbox-community/netbox/issues/3139) - Disable password change form for LDAP-authenticated users
+* [#3457](https://github.com/netbox-community/netbox/issues/3457) - Display cable colors on device view
+* [#3329](https://github.com/netbox-community/netbox/issues/3329) - Remove obsolete P3P policy header
+* [#3663](https://github.com/netbox-community/netbox/issues/3663) - Add query filters for `created` and `last_updated` fields
+* [#3722](https://github.com/netbox-community/netbox/issues/3722) - Allow the underscore character in IPAddress DNS names
+
+## Bug Fixes
+
+* [#3312](https://github.com/netbox-community/netbox/issues/3312) - Fix validation error when editing power cables in bulk
+* [#3644](https://github.com/netbox-community/netbox/issues/3644) - Fix exception when connecting a cable to a RearPort with no corresponding FrontPort
+* [#3669](https://github.com/netbox-community/netbox/issues/3669) - Include `weight` field in prefix/VLAN role form
+* [#3674](https://github.com/netbox-community/netbox/issues/3674) - Include comments on PowerFeed view
+* [#3679](https://github.com/netbox-community/netbox/issues/3679) - Fix link for assigned ipaddress in interface page
+* [#3709](https://github.com/netbox-community/netbox/issues/3709) - Prevent exception when importing an invalid cable definition
+* [#3720](https://github.com/netbox-community/netbox/issues/3720) - Correctly indicate power feed terminations on cable list
+* [#3724](https://github.com/netbox-community/netbox/issues/3724) - Fix API filtering of interfaces by more than one device name
+* [#3725](https://github.com/netbox-community/netbox/issues/3725) - Enforce client validation for minimum service port number
+
 # v2.6.7 (2019-11-01)
 
 ## Enhancements
