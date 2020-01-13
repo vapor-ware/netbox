@@ -7,7 +7,7 @@ from tenancy.forms import TenancyFilterForm, TenancyForm
 from tenancy.models import Tenant
 from utilities.forms import (
     APISelect, APISelectMultiple, add_blank_choice, BootstrapMixin, CommentField, CSVChoiceField,
-    FilterChoiceField, SmallTextarea, SlugField, StaticSelect2, StaticSelect2Multiple
+    DatePicker, FilterChoiceField, SmallTextarea, SlugField, StaticSelect2, StaticSelect2Multiple
 )
 from .constants import *
 from .models import Circuit, CircuitTermination, CircuitType, Provider
@@ -104,6 +104,18 @@ class ProviderFilterForm(BootstrapMixin, CustomFieldFilterForm):
         required=False,
         label='Search'
     )
+    region = FilterChoiceField(
+        queryset=Region.objects.all(),
+        to_field_name='slug',
+        required=False,
+        widget=APISelectMultiple(
+            api_url="/api/dcim/regions/",
+            value_field="slug",
+            filter_for={
+                'site': 'region'
+            }
+        )
+    )
     site = FilterChoiceField(
         queryset=Site.objects.all(),
         to_field_name='slug',
@@ -161,7 +173,6 @@ class CircuitForm(BootstrapMixin, TenancyForm, CustomFieldForm):
         ]
         help_texts = {
             'cid': "Unique circuit ID",
-            'install_date': "Format: YYYY-MM-DD",
             'commit_rate': "Committed rate",
         }
         widgets = {
@@ -172,7 +183,7 @@ class CircuitForm(BootstrapMixin, TenancyForm, CustomFieldForm):
                 api_url="/api/circuits/circuit-types/"
             ),
             'status': StaticSelect2(),
-
+            'install_date': DatePicker(),
         }
 
 
@@ -303,6 +314,9 @@ class CircuitFilterForm(BootstrapMixin, TenancyFilterForm, CustomFieldFilterForm
         widget=APISelectMultiple(
             api_url="/api/dcim/regions/",
             value_field="slug",
+            filter_for={
+                'site': 'region'
+            }
         )
     )
     site = FilterChoiceField(
