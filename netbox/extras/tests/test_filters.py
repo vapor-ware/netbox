@@ -49,7 +49,7 @@ class ExportTemplateTestCase(TestCase):
     @classmethod
     def setUpTestData(cls):
 
-        content_types = ContentType.objects.filter(model__in=['site', 'rack', 'device'])
+        content_types = ContentType.objects.filter(app_label='dcim', model__in=['site', 'rack', 'device'])
 
         export_templates = (
             ExportTemplate(name='Export Template 1', content_type=content_types[0], template_language=TemplateLanguageChoices.LANGUAGE_DJANGO, template_code='TESTING'),
@@ -63,7 +63,7 @@ class ExportTemplateTestCase(TestCase):
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 1)
 
     def test_content_type(self):
-        params = {'content_type': ContentType.objects.get(model='site').pk}
+        params = {'content_type': ContentType.objects.get(app_label='dcim', model='site').pk}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 1)
 
     def test_template_language(self):
