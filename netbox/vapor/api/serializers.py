@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from taggit_serializer.serializers import TaggitSerializer, TagListSerializerField
 from drf_yasg.utils import swagger_serializer_method
-from dcim.constants import CONNECTION_STATUS_CHOICES, IFACE_TYPE_CHOICES
+from dcim.constants import CONNECTION_STATUS_CHOICES
 
 from extras.api.customfields import CustomFieldModelSerializer
 from dcim.api.nested_serializers import (
@@ -9,11 +9,8 @@ from dcim.api.nested_serializers import (
     NestedInterfaceSerializer,
     NestedCableSerializer,
 )
-from dcim.api.serializers import (
-    InterfaceConnectionSerializer,
-    IFACE_TYPE_CHOICES,
-    IFACE_MODE_CHOICES,
-)
+from dcim.api.serializers import InterfaceConnectionSerializer
+from dcim.choices import InterfaceTypeChoices, InterfaceModeChoices
 from dcim.models import Interface
 from ipam.api.nested_serializers import NestedPrefixSerializer
 from ipam.models import VLAN, Prefix
@@ -67,7 +64,7 @@ class NestedVLANInterfaceSerializer(WritableNestedSerializer):
     device = NestedDeviceSerializer(read_only=True)
     url = serializers.HyperlinkedIdentityField(view_name='dcim-api:interface-detail')
     connection_status = ChoiceField(choices=CONNECTION_STATUS_CHOICES, read_only=True)
-    type = ChoiceField(choices=IFACE_TYPE_CHOICES, required=False)
+    type = ChoiceField(choices=InterfaceTypeChoices, required=False)
 
     untagged_vlan = NestedVaporVLANSerializer(required=False, allow_null=True)
     tagged_vlans = SerializedPKRelatedField(
@@ -125,11 +122,9 @@ class CustomerSerializer(TaggitSerializer, CustomFieldModelSerializer):
 
 class InterfaceSerializer(TaggitSerializer, ConnectedEndpointSerializer):
     device = NestedDeviceSerializer()
-    type = ChoiceField(choices=IFACE_TYPE_CHOICES, required=False)
-    # TODO: Remove in v2.7 (backward-compatibility for form_factor)
-    form_factor = ChoiceField(choices=IFACE_TYPE_CHOICES, required=False)
+    type = ChoiceField(choices=InterfaceTypeChoices, required=False)
     lag = NestedInterfaceSerializer(required=False, allow_null=True)
-    mode = ChoiceField(choices=IFACE_MODE_CHOICES, required=False, allow_null=True)
+    mode = ChoiceField(choices=InterfaceModeChoices, required=False, allow_null=True)
     untagged_vlan = NestedVaporVLANSerializer(required=False, allow_null=True)
     tagged_vlans = SerializedPKRelatedField(
         queryset=VLAN.objects.all(),
@@ -143,7 +138,7 @@ class InterfaceSerializer(TaggitSerializer, ConnectedEndpointSerializer):
     class Meta:
         model = Interface
         fields = [
-            'id', 'device', 'name', 'type', 'form_factor', 'enabled', 'lag', 'mtu', 'mac_address', 'mgmt_only',
+            'id', 'device', 'name', 'type', 'enabled', 'lag', 'mtu', 'mac_address', 'mgmt_only',
             'description', 'connected_endpoint_type', 'connected_endpoint', 'connection_status', 'cable', 'mode',
             'untagged_vlan', 'tagged_vlans', 'tags', 'count_ipaddresses',
         ]

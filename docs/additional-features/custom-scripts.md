@@ -27,11 +27,17 @@ class MyScript(Script):
     var2 = IntegerVar(...)
     var3 = ObjectVar(...)
 
-    def run(self, data):
+    def run(self, data, commit):
         ...
 ```
 
-The `run()` method is passed a single argument: a dictionary containing all of the variable data passed via the web form. Your script can reference this data during execution.
+The `run()` method should accept two arguments:
+
+* `data` - A dictionary containing all of the variable data passed via the web form.
+* `commit` - A boolean indicating whether database changes will be committed.
+
+!!! note
+    The `commit` argument was introduced in NetBox v2.7.8. Backward compatibility is maintained for scripts which accept only the `data` argument, however moving forward scripts should accept both arguments.
 
 Defining variables is optional: You may create a script with only a `run()` method if no user input is needed.
 
@@ -124,7 +130,7 @@ Arbitrary text of any length. Renders as multi-line text input field.
 
 Stored a numeric integer. Options include:
 
-* `min_value:` - Minimum value
+* `min_value` - Minimum value
 * `max_value` - Maximum value
 
 ### BooleanVar
@@ -158,18 +164,30 @@ A NetBox object. The list of available objects is defined by the queryset parame
 
 An uploaded file. Note that uploaded files are present in memory only for the duration of the script's execution: They will not be save for future use.
 
+### IPAddressVar
+
+An IPv4 or IPv6 address, without a mask. Returns a `netaddr.IPAddress` object.
+
+### IPAddressWithMaskVar
+
+An IPv4 or IPv6 address with a mask. Returns a `netaddr.IPNetwork` object which includes the mask.
+
 ### IPNetworkVar
 
-An IPv4 or IPv6 network with a mask.
+An IPv4 or IPv6 network with a mask. Returns a `netaddr.IPNetwork` object. Two attributes are available to validate the provided mask:
+
+* `min_prefix_length` - Minimum length of the mask (default: none)
+* `max_prefix_length` - Maximum length of the mask (default: none)
 
 ### Default Options
 
 All variables support the following default options:
 
-* `label` - The name of the form field
-* `description` - A brief description of the field
 * `default` - The field's default value
+* `description` - A brief description of the field
+* `label` - The name of the form field
 * `required` - Indicates whether the field is mandatory (default: true)
+* `widget` - The class of form widget to use (see the [Django documentation](https://docs.djangoproject.com/en/stable/ref/forms/widgets/))
 
 ## Example
 
@@ -184,7 +202,7 @@ These variables are presented as a web form to be completed by the user. Once su
 ```
 from django.utils.text import slugify
 
-from dcim.constants import *
+from dcim.choices import DeviceStatusChoices, SiteStatusChoices
 from dcim.models import Device, DeviceRole, DeviceType, Site
 from extras.scripts import *
 
@@ -210,13 +228,13 @@ class NewBranchScript(Script):
         )
     )
 
-    def run(self, data):
+    def run(self, data, commit):
 
         # Create the new site
         site = Site(
             name=data['site_name'],
             slug=slugify(data['site_name']),
-            status=SITE_STATUS_PLANNED
+            status=SiteStatusChoices.STATUS_PLANNED
         )
         site.save()
         self.log_success("Created new site: {}".format(site))
@@ -228,7 +246,7 @@ class NewBranchScript(Script):
                 device_type=data['switch_model'],
                 name='{}-switch{}'.format(site.slug, i),
                 site=site,
-                status=DEVICE_STATUS_PLANNED,
+                status=DeviceStatusChoices.STATUS_PLANNED,
                 device_role=switch_role
             )
             switch.save()

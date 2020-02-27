@@ -6,6 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError, MultipleObjectsReturned, ObjectDoesNotExist
 from django.db.models import ManyToManyField, ProtectedError
 from django.http import Http404
+from django.urls import reverse
 from rest_framework.exceptions import APIException
 from rest_framework.permissions import BasePermission
 from rest_framework.relations import PrimaryKeyRelatedField, RelatedField
@@ -41,6 +42,14 @@ def get_serializer_for_model(model, prefix=''):
         )
 
 
+def is_api_request(request):
+    """
+    Return True of the request is being made via the REST API.
+    """
+    api_path = reverse('api-root')
+    return request.path_info.startswith(api_path)
+
+
 #
 # Authentication
 #
@@ -61,18 +70,34 @@ class IsAuthenticatedOrLoginNotRequired(BasePermission):
 
 class ChoiceField(Field):
     """
-    Represent a ChoiceField as {'value': <DB value>, 'label': <string>}.
+    Represent a ChoiceField as {'value': <DB value>, 'label': <string>}. Accepts a single value on write.
+
+    :param choices: An iterable of choices in the form (value, key).
+    :param allow_blank: Allow blank values in addition to the listed choices.
     """
-    def __init__(self, choices, **kwargs):
+    def __init__(self, choices, allow_blank=False, **kwargs):
+        self.choiceset = choices
+        self.allow_blank = allow_blank
         self._choices = dict()
+
+        # Unpack grouped choices
         for k, v in choices:
-            # Unpack grouped choices
             if type(v) in [list, tuple]:
                 for k2, v2 in v:
                     self._choices[k2] = v2
             else:
                 self._choices[k] = v
+
         super().__init__(**kwargs)
+
+    def validate_empty_values(self, data):
+        # Convert null to an empty string unless allow_null == True
+        if data is None:
+            if self.allow_null:
+                return True, None
+            else:
+                data = ''
+        return super().validate_empty_values(data)
 
     def to_representation(self, obj):
         if obj is '':
@@ -81,9 +106,19 @@ class ChoiceField(Field):
             ('value', obj),
             ('label', self._choices[obj])
         ])
+
+        # TODO: Remove in v2.8
+        # Include legacy numeric ID (where applicable)
+        if hasattr(self.choiceset, 'LEGACY_MAP') and obj in self.choiceset.LEGACY_MAP:
+            data['id'] = self.choiceset.LEGACY_MAP.get(obj)
+
         return data
 
     def to_internal_value(self, data):
+        if data is '':
+            if self.allow_blank:
+                return data
+            raise ValidationError("This field may not be blank.")
 
         # Provide an explicit error message if the request is trying to write a dict or list
         if isinstance(data, (dict, list)):
@@ -104,6 +139,10 @@ class ChoiceField(Field):
         try:
             if data in self._choices:
                 return data
+            # Check if data is a legacy numeric ID
+            slug = self.choiceset.id_to_slug(data)
+            if slug is not None:
+                return slug
         except TypeError:  # Input is an unhashable type
             pass
 
@@ -315,13 +354,12 @@ class FieldChoicesViewSet(ViewSet):
 
         # Compile a dict of all fields in this view
         self._fields = OrderedDict()
-        for cls, field_list in self.fields:
+        for serializer_class, field_list in self.fields:
             for field_name in field_list:
 
-                model_name = cls._meta.verbose_name.lower().replace(' ', '-')
-                key = ':'.join([model_name, field_name])
-
-                serializer = get_serializer_for_model(cls)()
+                model_name = serializer_class.Meta.model._meta.verbose_name
+                key = ':'.join([model_name.lower().replace(' ', '-'), field_name])
+                serializer = serializer_class()
                 choices = []
 
                 for k, v in serializer.get_fields()[field_name].choices.items():

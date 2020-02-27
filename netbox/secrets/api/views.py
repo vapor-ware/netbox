@@ -38,7 +38,7 @@ class SecretRoleViewSet(ModelViewSet):
     )
     serializer_class = serializers.SecretRoleSerializer
     permission_classes = [IsAuthenticated]
-    filterset_class = filters.SecretRoleFilter
+    filterset_class = filters.SecretRoleFilterSet
 
 
 #
@@ -50,7 +50,7 @@ class SecretViewSet(ModelViewSet):
         'device__primary_ip4', 'device__primary_ip6', 'role', 'role__users', 'role__groups', 'tags',
     )
     serializer_class = serializers.SecretSerializer
-    filterset_class = filters.SecretFilter
+    filterset_class = filters.SecretFilterSet
 
     master_key = None
 
@@ -93,8 +93,8 @@ class SecretViewSet(ModelViewSet):
 
         secret = self.get_object()
 
-        # Attempt to decrypt the secret if the master key is known
-        if self.master_key is not None:
+        # Attempt to decrypt the secret if the user is permitted and the master key is known
+        if secret.decryptable_by(request.user) and self.master_key is not None:
             secret.decrypt(self.master_key)
 
         serializer = self.get_serializer(secret)
@@ -111,7 +111,9 @@ class SecretViewSet(ModelViewSet):
             if self.master_key is not None:
                 secrets = []
                 for secret in page:
-                    secret.decrypt(self.master_key)
+                    # Enforce role permissions
+                    if secret.decryptable_by(request.user):
+                        secret.decrypt(self.master_key)
                     secrets.append(secret)
                 serializer = self.get_serializer(secrets, many=True)
             else:

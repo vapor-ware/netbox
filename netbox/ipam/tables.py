@@ -26,7 +26,7 @@ RIR_UTILIZATION = """
 """
 
 RIR_ACTIONS = """
-<a href="{% url 'ipam:rir_changelog' slug=record.slug %}" class="btn btn-default btn-xs" title="Changelog">
+<a href="{% url 'ipam:rir_changelog' slug=record.slug %}" class="btn btn-default btn-xs" title="Change log">
     <i class="fa fa-history"></i>
 </a>
 {% if perms.ipam.change_rir %}
@@ -48,7 +48,7 @@ ROLE_VLAN_COUNT = """
 """
 
 ROLE_ACTIONS = """
-<a href="{% url 'ipam:role_changelog' slug=record.slug %}" class="btn btn-default btn-xs" title="Changelog">
+<a href="{% url 'ipam:role_changelog' slug=record.slug %}" class="btn btn-default btn-xs" title="Change log">
     <i class="fa fa-history"></i>
 </a>
 {% if perms.ipam.change_role %}
@@ -145,7 +145,7 @@ VLAN_ROLE_LINK = """
 """
 
 VLANGROUP_ACTIONS = """
-<a href="{% url 'ipam:vlangroup_changelog' pk=record.pk %}" class="btn btn-default btn-xs" title="Changelog">
+<a href="{% url 'ipam:vlangroup_changelog' pk=record.pk %}" class="btn btn-default btn-xs" title="Change log">
     <i class="fa fa-history"></i>
 </a>
 {% with next_vid=record.get_next_available_vid %}
@@ -292,11 +292,15 @@ class RoleTable(BaseTable):
         orderable=False,
         verbose_name='VLANs'
     )
-    actions = tables.TemplateColumn(template_code=ROLE_ACTIONS, attrs={'td': {'class': 'text-right noprint'}}, verbose_name='')
+    actions = tables.TemplateColumn(
+        template_code=ROLE_ACTIONS,
+        attrs={'td': {'class': 'text-right noprint'}},
+        verbose_name=''
+    )
 
     class Meta(BaseTable.Meta):
         model = Role
-        fields = ('pk', 'name', 'prefix_count', 'vlan_count', 'slug', 'weight', 'actions')
+        fields = ('pk', 'name', 'prefix_count', 'vlan_count', 'description', 'slug', 'weight', 'actions')
 
 
 #
@@ -373,7 +377,7 @@ class IPAddressAssignTable(BaseTable):
 
     class Meta(BaseTable.Meta):
         model = IPAddress
-        fields = ('address', 'vrf', 'status', 'role', 'tenant', 'parent', 'interface', 'description')
+        fields = ('address', 'dns_name', 'vrf', 'status', 'role', 'tenant', 'parent', 'interface', 'description')
         orderable = False
 
 
@@ -381,7 +385,7 @@ class InterfaceIPAddressTable(BaseTable):
     """
     List IP addresses assigned to a specific Interface.
     """
-    address = tables.TemplateColumn(IPADDRESS_ASSIGN_LINK, verbose_name='IP Address')
+    address = tables.LinkColumn(verbose_name='IP Address')
     vrf = tables.TemplateColumn(VRF_LINK, verbose_name='VRF')
     status = tables.TemplateColumn(STATUS_LABEL)
     tenant = tables.TemplateColumn(template_code=TENANT_LINK)

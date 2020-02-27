@@ -1,5 +1,7 @@
 {% extends '_base.html' %}
+{% load buttons %}
 {% load custom_links %}
+{% load static %}
 {% load helpers %}
 
 {% block header %}
@@ -26,17 +28,14 @@
         </div>
     </div>
     <div class="pull-right noprint">
+        {% if perms.virtualization.add_virtualmachine %}
+            {% clone_button virtualmachine %}
+        {% endif %}
         {% if perms.virtualization.change_virtualmachine %}
-            <a href="{% url 'virtualization:virtualmachine_edit' pk=virtualmachine.pk %}" class="btn btn-warning">
-                <span class="fa fa-pencil"></span>
-                Edit this VM
-            </a>
+            {% edit_button virtualmachine %}
         {% endif %}
         {% if perms.virtualization.delete_virtualmachine %}
-            <a href="{% url 'virtualization:virtualmachine_delete' pk=virtualmachine.pk %}" class="btn btn-danger">
-                <span class="fa fa-trash"></span>
-                Delete this VM
-            </a>
+            {% delete_button virtualmachine %}
         {% endif %}
     </div>
     <h1>{% block title %}{{ virtualmachine }}{% endblock %}</h1>
@@ -55,7 +54,7 @@
         {% endif %}
         {% if perms.extras.view_objectchange %}
             <li role="presentation"{% if active_tab == 'changelog' %} class="active"{% endif %}>
-                <a href="{% url 'virtualization:virtualmachine_changelog' pk=virtualmachine.pk %}">Changelog</a>
+                <a href="{% url 'virtualization:virtualmachine_changelog' pk=virtualmachine.pk %}">Change Log</a>
             </li>
         {% endif %}
     </ul>
@@ -253,6 +252,9 @@
                         <span class="glyphicon glyphicon-check" aria-hidden="true"></span> Show IPs
                     </button>
                 </div>
+                <div class="col-md-2 pull-right noprint">
+                    <input class="form-control interface-filter" type="text" placeholder="Filter" title="RegEx-enabled" style="height: 23px" />
+                </div>
             </div>
             <table id="interfaces_table" class="table table-hover table-headings panel-body component-list">
                 <thead>
@@ -263,7 +265,9 @@
                         <th>Name</th>
                         <th>LAG</th>
                         <th>Description</th>
+                        <th>MTU</th>
                         <th>Mode</th>
+                        <th>Cable</th>
                         <th colspan="2">Connection</th>
                         <th></th>
                     </tr>
@@ -284,18 +288,18 @@
                         <button type="submit" name="_rename" formaction="{% url 'dcim:interface_bulk_rename' %}?return_url={{ virtualmachine.get_absolute_url }}" class="btn btn-warning btn-xs">
                             <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span> Rename
                         </button>
-                        <button type="submit" name="_edit" formaction="{% url 'virtualization:interface_bulk_edit' pk=virtualmachine.pk %}?return_url={{ virtualmachine.get_absolute_url }}" class="btn btn-warning btn-xs">
+                        <button type="submit" name="_edit" formaction="{% url 'virtualization:interface_bulk_edit' %}?return_url={{ virtualmachine.get_absolute_url }}" class="btn btn-warning btn-xs">
                             <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span> Edit
                         </button>
                     {% endif %}
                     {% if interfaces and perms.dcim.delete_interface %}
-                        <button type="submit" name="_delete" formaction="{% url 'virtualization:interface_bulk_delete' pk=virtualmachine.pk %}?return_url={{ virtualmachine.get_absolute_url }}" class="btn btn-danger btn-xs">
+                        <button type="submit" name="_delete" formaction="{% url 'virtualization:interface_bulk_delete' %}?return_url={{ virtualmachine.get_absolute_url }}" class="btn btn-danger btn-xs">
                             <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete
                         </button>
                     {% endif %}
                     {% if perms.dcim.add_interface %}
                         <div class="pull-right">
-                            <a href="{% url 'virtualization:interface_add' pk=virtualmachine.pk %}" class="btn btn-primary btn-xs">
+                            <a href="{% url 'virtualization:interface_add' %}?virtual_machine={{ virtualmachine.pk }}&return_url={{ virtualmachine.get_absolute_url }}" class="btn btn-primary btn-xs">
                                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Add interfaces
                             </a>
                         </div>
@@ -312,18 +316,5 @@
 {% endblock %}
 
 {% block javascript %}
-<script type="text/javascript">
-// Toggle the display of IP addresses under interfaces
-$('button.toggle-ips').click(function() {
-    var selected = $(this).attr('selected');
-    if (selected) {
-        $('#interfaces_table tr.ipaddresses').hide();
-    } else {
-        $('#interfaces_table tr.ipaddresses').show();
-    }
-    $(this).attr('selected', !selected);
-    $(this).children('span').toggleClass('glyphicon-check glyphicon-unchecked');
-    return false;
-});
-</script>
+<script src="{% static 'js/interface_toggles.js' %}?v{{ settings.VERSION }}"></script>
 {% endblock %}

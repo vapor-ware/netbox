@@ -21,6 +21,7 @@ class NetBoxAdminSite(AdminSite):
     site_header = 'NetBox Administration'
     site_title = 'NetBox'
     site_url = '/{}'.format(settings.BASE_PATH)
+    index_template = 'django_rq/index.html'
 
 
 admin_site = NetBoxAdminSite(name='admin')
@@ -34,11 +35,3 @@ admin_site.register(Site, SiteAdmin)
 admin_site.register(SocialApp, SocialAppAdmin)
 admin_site.register(SocialAccount, SocialAccountAdmin)
 admin_site.register(SocialToken, SocialTokenAdmin)
-
-# Modify the template to include an RQ link if django_rq is installed (see RQ_SHOW_ADMIN_LINK)
-if settings.WEBHOOKS_ENABLED:
-    try:
-        import django_rq
-        admin_site.index_template = 'django_rq/index.html'
-    except ImportError:
-        pass

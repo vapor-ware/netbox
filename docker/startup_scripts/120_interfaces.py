@@ -1,5 +1,4 @@
 from dcim.models import Interface, Device, DeviceRole
-from dcim.constants import IFACE_TYPE_KEYSTONE
 
 from ruamel.yaml import YAML
 from pathlib import Path
@@ -31,6 +30,6 @@ with file.open('r') as stream:
 
             i += 2
 
-            interface, created = Interface.objects.get_or_create(name=name, device=locker, type=IFACE_TYPE_KEYSTONE)
+            interface, created = Interface.objects.get_or_create(name=name, device=locker, type='keystone')
             if created:
                 print("🔗 Created interface {} for {}".format(interface.name, locker.name))

@@ -5,10 +5,8 @@ from django.db import ProgrammingError
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 
+from .api import is_api_request
 from .views import server_error
-
-BASE_PATH = getattr(settings, 'BASE_PATH', False)
-LOGIN_REQUIRED = getattr(settings, 'LOGIN_REQUIRED', False)
 
 
 class LoginRequiredMiddleware(object):
@@ -19,7 +17,7 @@ class LoginRequiredMiddleware(object):
         self.get_response = get_response
 
     def __call__(self, request):
-        if LOGIN_REQUIRED and not request.user.is_authenticated:
+        if settings.LOGIN_REQUIRED and not request.user.is_authenticated:
             # Redirect unauthenticated requests to the login page. API requests are exempt from redirection as the API
             # performs its own authentication. Also metrics can be read without login.
             api_path = reverse('api-root')
@@ -41,9 +39,8 @@ class APIVersionMiddleware(object):
         self.get_response = get_response
 
     def __call__(self, request):
-        api_path = reverse('api-root')
         response = self.get_response(request)
-        if request.path_info.startswith(api_path):
+        if is_api_request(request):
             response['API-Version'] = settings.REST_FRAMEWORK_VERSION
         return response
 

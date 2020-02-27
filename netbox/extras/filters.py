@@ -4,8 +4,22 @@ from django.db.models import Q
 
 from dcim.models import DeviceRole, Platform, Region, Site
 from tenancy.models import Tenant, TenantGroup
-from .constants import *
-from .models import ConfigContext, CustomField, Graph, ExportTemplate, ObjectChange, Tag, TopologyMap
+from virtualization.models import Cluster, ClusterGroup
+from .choices import *
+from .models import ConfigContext, CustomField, Graph, ExportTemplate, ObjectChange, Tag
+
+
+__all__ = (
+    'ConfigContextFilterSet',
+    'CreatedUpdatedFilterSet',
+    'CustomFieldFilter',
+    'CustomFieldFilterSet',
+    'ExportTemplateFilterSet',
+    'GraphFilterSet',
+    'LocalConfigContextFilterSet',
+    'ObjectChangeFilterSet',
+    'TagFilterSet',
+)
 
 
 class CustomFieldFilter(django_filters.Filter):
@@ -25,7 +39,7 @@ class CustomFieldFilter(django_filters.Filter):
             return queryset
 
         # Selection fields get special treatment (values must be integers)
-        if self.cf_type == CF_TYPE_SELECT:
+        if self.cf_type == CustomFieldTypeChoices.TYPE_SELECT:
             try:
                 # Treat 0 as None
                 if int(value) == 0:
@@ -42,7 +56,8 @@ class CustomFieldFilter(django_filters.Filter):
                 return queryset.none()
 
         # Apply the assigned filter logic (exact or loose)
-        if self.cf_type == CF_TYPE_BOOLEAN or self.filter_logic == CF_FILTER_EXACT:
+        if (self.cf_type == CustomFieldTypeChoices.TYPE_BOOLEAN or
+                self.filter_logic == CustomFieldFilterLogicChoices.FILTER_EXACT):
             queryset = queryset.filter(
                 custom_field_values__field__name=self.field_name,
                 custom_field_values__serialized_value=value
@@ -65,26 +80,30 @@ class CustomFieldFilterSet(django_filters.FilterSet):
         super().__init__(*args, **kwargs)
 
         obj_type = ContentType.objects.get_for_model(self._meta.model)
-        custom_fields = CustomField.objects.filter(obj_type=obj_type).exclude(filter_logic=CF_FILTER_DISABLED)
+        custom_fields = CustomField.objects.filter(
+            obj_type=obj_type
+        ).exclude(
+            filter_logic=CustomFieldFilterLogicChoices.FILTER_DISABLED
+        )
         for cf in custom_fields:
             self.filters['cf_{}'.format(cf.name)] = CustomFieldFilter(field_name=cf.name, custom_field=cf)
 
 
-class GraphFilter(django_filters.FilterSet):
+class GraphFilterSet(django_filters.FilterSet):
 
     class Meta:
         model = Graph
-        fields = ['type', 'name']
+        fields = ['type', 'name', 'template_language']
 
 
-class ExportTemplateFilter(django_filters.FilterSet):
+class ExportTemplateFilterSet(django_filters.FilterSet):
 
     class Meta:
         model = ExportTemplate
         fields = ['content_type', 'name', 'template_language']
 
 
-class TagFilter(django_filters.FilterSet):
+class TagFilterSet(django_filters.FilterSet):
     q = django_filters.CharFilter(
         method='search',
         label='Search',
@@ -103,25 +122,7 @@ class TagFilter(django_filters.FilterSet):
         )
 
 
-class TopologyMapFilter(django_filters.FilterSet):
-    site_id = django_filters.ModelMultipleChoiceFilter(
-        field_name='site',
-        queryset=Site.objects.all(),
-        label='Site',
-    )
-    site = django_filters.ModelMultipleChoiceFilter(
-        field_name='site__slug',
-        queryset=Site.objects.all(),
-        to_field_name='slug',
-        label='Site (slug)',
-    )
-
-    class Meta:
-        model = TopologyMap
-        fields = ['name', 'slug']
-
-
-class ConfigContextFilter(django_filters.FilterSet):
+class ConfigContextFilterSet(django_filters.FilterSet):
     q = django_filters.CharFilter(
         method='search',
         label='Search',
@@ -170,6 +171,22 @@ class ConfigContextFilter(django_filters.FilterSet):
         to_field_name='slug',
         label='Platform (slug)',
     )
+    cluster_group_id = django_filters.ModelMultipleChoiceFilter(
+        field_name='cluster_groups',
+        queryset=ClusterGroup.objects.all(),
+        label='Cluster group',
+    )
+    cluster_group = django_filters.ModelMultipleChoiceFilter(
+        field_name='cluster_groups__slug',
+        queryset=ClusterGroup.objects.all(),
+        to_field_name='slug',
+        label='Cluster group (slug)',
+    )
+    cluster_id = django_filters.ModelMultipleChoiceFilter(
+        field_name='clusters',
+        queryset=Cluster.objects.all(),
+        label='Cluster',
+    )
     tenant_group_id = django_filters.ModelMultipleChoiceFilter(
         field_name='tenant_groups',
         queryset=TenantGroup.objects.all(),
@@ -192,6 +209,12 @@ class ConfigContextFilter(django_filters.FilterSet):
         to_field_name='slug',
         label='Tenant (slug)',
     )
+    tag = django_filters.ModelMultipleChoiceFilter(
+        field_name='tags__slug',
+        queryset=Tag.objects.all(),
+        to_field_name='slug',
+        label='Tag (slug)',
+    )
 
     class Meta:
         model = ConfigContext
@@ -211,7 +234,7 @@ class ConfigContextFilter(django_filters.FilterSet):
 # Filter for Local Config Context Data
 #
 
-class LocalConfigContextFilter(django_filters.FilterSet):
+class LocalConfigContextFilterSet(django_filters.FilterSet):
     local_context_data = django_filters.BooleanFilter(
         method='_local_context_data',
         label='Has local config context data',
@@ -221,7 +244,7 @@ class LocalConfigContextFilter(django_filters.FilterSet):
         return queryset.exclude(local_context_data__isnull=value)
 
 
-class ObjectChangeFilter(django_filters.FilterSet):
+class ObjectChangeFilterSet(django_filters.FilterSet):
     q = django_filters.CharFilter(
         method='search',
         label='Search',

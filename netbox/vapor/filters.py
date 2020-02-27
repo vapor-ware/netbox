@@ -5,9 +5,8 @@ from extras.filters import CustomFieldFilterSet
 from utilities.filters import NameSlugSearchFilterSet, NumericInFilter, TagFilter, MultiValueNumberFilter
 from tenancy.models import Tenant, TenantGroup
 from dcim.models import Site, Device, DeviceRole, Interface
-from dcim.api.serializers import (
-    IFACE_TYPE_CHOICES,
-    IFACE_MODE_CHOICES,
+from dcim.choices import (
+    InterfaceTypeChoices,
 )
 from dcim.filters import MultiValueMACAddressFilter
 
@@ -104,7 +103,7 @@ class InterfaceFilter(django_filters.FilterSet):
         label='Assigned VID'
     )
     type = django_filters.MultipleChoiceFilter(
-        choices=IFACE_TYPE_CHOICES,
+        choices=InterfaceTypeChoices,
         null_value=None
     )
 

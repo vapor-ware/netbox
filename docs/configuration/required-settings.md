@@ -21,11 +21,11 @@ NetBox requires access to a PostgreSQL database service to store data. This serv
 * `PASSWORD` - PostgreSQL password
 * `HOST` - Name or IP address of the database server (use `localhost` if running locally)
 * `PORT` - TCP port of the PostgreSQL service; leave blank for default port (5432)
-* `CONN_MAX_AGE` - Number in seconds for Netbox to keep database connections open. 150-300 seconds is typically a good starting point ([more info](https://docs.djangoproject.com/en/stable/ref/databases/#persistent-connections)).
+* `CONN_MAX_AGE` - Lifetime of a [persistent database connection](https://docs.djangoproject.com/en/stable/ref/databases/#persistent-connections), in seconds (150-300 is recommended)
 
 Example:
 
-```
+```python
 DATABASE = {
     'NAME': 'netbox',               # Database name
     'USER': 'netbox',               # PostgreSQL username
@@ -36,46 +36,99 @@ DATABASE = {
 }
 ```
 
+!!! note
+    NetBox supports all PostgreSQL database options supported by the underlying Django framework. For a complete list of available parameters, please see [the Django documentation](https://docs.djangoproject.com/en/stable/ref/settings/#databases).
+
 ---
 
 ## REDIS
 
 [Redis](https://redis.io/) is an in-memory data store similar to memcached. While Redis has been an optional component of
 NetBox since the introduction of webhooks in version 2.4, it is required starting in 2.6 to support NetBox's caching
-functionality (as well as other planned features).
+functionality (as well as other planned features). In 2.7, the connection settings were broken down into two sections for
+webhooks and caching, allowing the user to connect to different Redis instances/databases per feature.
 
-Redis is configured using a configuration setting similar to `DATABASE`:
+Redis is configured using a configuration setting similar to `DATABASE` and these settings are the same for both of the `webhooks` and `caching` subsections:
 
 * `HOST` - Name or IP address of the Redis server (use `localhost` if running locally)
 * `PORT` - TCP port of the Redis service; leave blank for default port (6379)
 * `PASSWORD` - Redis password (if set)
-* `DATABASE` - Numeric database ID for webhooks
-* `CACHE_DATABASE` - Numeric database ID for caching
+* `DATABASE` - Numeric database ID
 * `DEFAULT_TIMEOUT` - Connection timeout in seconds
 * `SSL` - Use SSL connection to Redis
 
 Example:
 
-```
+```python
 REDIS = {
-    'HOST': 'localhost',
-    'PORT': 6379,
-    'PASSWORD': '',
-    'DATABASE': 0,
-    'CACHE_DATABASE': 1,
-    'DEFAULT_TIMEOUT': 300,
-    'SSL': False,
+    'webhooks': {
+        'HOST': 'redis.example.com',
+        'PORT': 1234,
+        'PASSWORD': 'foobar',
+        'DATABASE': 0,
+        'DEFAULT_TIMEOUT': 300,
+        'SSL': False,
+    },
+    'caching': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'PASSWORD': '',
+        'DATABASE': 1,
+        'DEFAULT_TIMEOUT': 300,
+        'SSL': False,
+    }
 }
 ```
 
-!!! note:
-    If you were using these settings in a prior release with webhooks, the `DATABASE` setting remains the same but
-    an additional `CACHE_DATABASE` setting has been added with a default value of 1 to support the caching backend. The
-    `DATABASE` setting will be renamed in a future release of NetBox to better relay the meaning of the setting.
+!!! note
+    If you are upgrading from a version prior to v2.7, please note that the Redis connection configuration settings have
+    changed. Manual modification to bring the `REDIS` section inline with the above specification is necessary
 
-!!! warning:
-    It is highly recommended to keep the webhook and cache databases seperate. Using the same database number for both may result in webhook
-    processing data being lost in cache flushing events.
+!!! note
+    It is highly recommended to keep the webhook and cache databases separate. Using the same database number on the
+    same Redis instance for both may result in webhook processing data being lost during cache flushing events.
+
+### Using Redis Sentinel
+
+If you are using [Redis Sentinel](https://redis.io/topics/sentinel) for high-availability purposes, there is minimal 
+configuration necessary to convert NetBox to recognize it. It requires the removal of the `HOST` and `PORT` keys from 
+above and the addition of two new keys.
+
+* `SENTINELS`: List of tuples or tuple of tuples with each inner tuple containing the name or IP address 
+of the Redis server and port for each sentinel instance to connect to
+* `SENTINEL_SERVICE`: Name of the master / service to connect to
+
+Example:
+
+```python
+REDIS = {
+    'webhooks': {
+        'SENTINELS': [('mysentinel.redis.example.com', 6379)],
+        'SENTINEL_SERVICE': 'netbox',
+        'PASSWORD': '',
+        'DATABASE': 0,
+        'DEFAULT_TIMEOUT': 300,
+        'SSL': False,
+    },
+    'caching': {
+        'SENTINELS': [
+            ('mysentinel.redis.example.com', 6379),
+            ('othersentinel.redis.example.com', 6379)
+        ],
+        'SENTINEL_SERVICE': 'netbox',
+        'PASSWORD': '',
+        'DATABASE': 1,
+        'DEFAULT_TIMEOUT': 300,
+        'SSL': False,
+    }
+}
+```
+
+!!! note
+    It is possible to have only one or the other Redis configurations to use Sentinel functionality. It is possible
+    for example to have the webhook use sentinel via `HOST`/`PORT` and for caching to use Sentinel via 
+    `SENTINELS`/`SENTINEL_SERVICE`.
+
 
 ---
 

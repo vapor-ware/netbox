@@ -1,10 +1,11 @@
 from rest_framework import serializers
 
-from dcim.constants import CONNECTION_STATUS_CHOICES, IFACE_TYPE_CHOICES
+from dcim.choices import InterfaceTypeChoices
+from dcim.constants import CONNECTION_STATUS_CHOICES
 from dcim.models import (
     Cable, ConsolePort, ConsoleServerPort, Device, DeviceBay, DeviceType, DeviceRole, FrontPort, FrontPortTemplate,
-    Interface, Manufacturer, Platform, PowerFeed, PowerOutlet, PowerPanel, PowerPort, Rack, RackGroup, RackRole,
-    RearPort, RearPortTemplate, Region, Site, VirtualChassis,
+    Interface, Manufacturer, Platform, PowerFeed, PowerOutlet, PowerPanel, PowerPort, PowerPortTemplate, Rack,
+    RackGroup, RackRole, RearPort, RearPortTemplate, Region, Site, VirtualChassis,
 )
 from utilities.api import ChoiceField, WritableNestedSerializer
 
@@ -25,6 +26,7 @@ __all__ = [
     'NestedPowerOutletSerializer',
     'NestedPowerPanelSerializer',
     'NestedPowerPortSerializer',
+    'NestedPowerPortTemplateSerializer',
     'NestedRackGroupSerializer',
     'NestedRackRoleSerializer',
     'NestedRackSerializer',
@@ -109,6 +111,14 @@ class NestedDeviceTypeSerializer(WritableNestedSerializer):
     class Meta:
         model = DeviceType
         fields = ['id', 'url', 'manufacturer', 'model', 'slug', 'display_name', 'device_count']
+
+
+class NestedPowerPortTemplateSerializer(WritableNestedSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name='dcim-api:powerporttemplate-detail')
+
+    class Meta:
+        model = PowerPortTemplate
+        fields = ['id', 'url', 'name']
 
 
 class NestedRearPortTemplateSerializer(WritableNestedSerializer):
@@ -203,7 +213,7 @@ class NestedInterfaceSerializer(WritableNestedSerializer):
     device = NestedDeviceSerializer(read_only=True)
     url = serializers.HyperlinkedIdentityField(view_name='dcim-api:interface-detail')
     connection_status = ChoiceField(choices=CONNECTION_STATUS_CHOICES, read_only=True)
-    type = ChoiceField(choices=IFACE_TYPE_CHOICES, required=False)
+    type = ChoiceField(choices=InterfaceTypeChoices)
 
     class Meta:
         model = Interface

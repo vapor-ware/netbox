@@ -37,6 +37,10 @@ DATABASE = {
                                                          # PostgreSQL password
     'HOST': os.environ.get('DB_HOST', 'localhost'),      # Database server
     'PORT': os.environ.get('DB_PORT', ''),               # Database port (leave blank for default)
+    'OPTIONS': {'sslmode': os.environ.get('DB_SSLMODE', 'prefer')},
+                                                         # Database connection SSLMODE
+    'CONN_MAX_AGE': int(os.environ.get('DB_CONN_MAX_AGE', '300')),
+                                                         # Database connection persistence
 }
 
 # This key is used for secure generation of random numbers and strings. It must never be exposed outside of this file.
@@ -47,13 +51,22 @@ SECRET_KEY = os.environ.get('SECRET_KEY', read_secret('secret_key'))
 
 # Redis database settings. The Redis database is used for caching and background processing such as webhooks
 REDIS = {
-    'HOST': os.environ.get('REDIS_HOST', 'localhost'),
-    'PORT': int(os.environ.get('REDIS_PORT', 6379)),
-    'PASSWORD': os.environ.get('REDIS_PASSWORD', read_secret('redis_password')),
-    'DATABASE': os.environ.get('REDIS_DATABASE', '0'),
-    'CACHE_DATABASE': os.environ.get('REDIS_CACHE_DATABASE', '1'),
-    'DEFAULT_TIMEOUT': os.environ.get('REDIS_TIMEOUT', '300'),
-    'SSL': os.environ.get('REDIS_SSL', 'False').lower() == 'true',
+    'webhooks': {
+        'HOST': os.environ.get('REDIS_HOST', 'localhost'),
+        'PORT': int(os.environ.get('REDIS_PORT', 6379)),
+        'PASSWORD': os.environ.get('REDIS_PASSWORD', read_secret('redis_password')),
+        'DATABASE': int(os.environ.get('REDIS_DATABASE', 0)),
+        'DEFAULT_TIMEOUT': int(os.environ.get('REDIS_TIMEOUT', 300)),
+        'SSL': os.environ.get('REDIS_SSL', 'False').lower() == 'true',
+    },
+    'caching': {
+        'HOST': os.environ.get('REDIS_CACHE_HOST', os.environ.get('REDIS_HOST', 'localhost')),
+        'PORT': int(os.environ.get('REDIS_CACHE_PORT', os.environ.get('REDIS_PORT', 6379))),
+        'PASSWORD': os.environ.get('REDIS_CACHE_PASSWORD', os.environ.get('REDIS_PASSWORD', read_secret('redis_cache_password'))),
+        'DATABASE': int(os.environ.get('REDIS_CACHE_DATABASE', 1)),
+        'DEFAULT_TIMEOUT': int(os.environ.get('REDIS_CACHE_TIMEOUT', os.environ.get('REDIS_TIMEOUT', 300))),
+        'SSL': os.environ.get('REDIS_CACHE_SSL', os.environ.get('REDIS_SSL', 'False')).lower() == 'true',
+    },
 }
 
 #########################
@@ -161,12 +174,12 @@ PREFER_IPV4 = os.environ.get('PREFER_IPV4', 'False').lower() == 'true'
 # this setting is derived from the installed location.
 REPORTS_ROOT = os.environ.get('REPORTS_ROOT', '/etc/netbox/reports')
 
+# The file path where custom scripts will be stored. A trailing slash is not needed. Note that the default value of
+# this setting is derived from the installed location.
+SCRIPTS_ROOT = os.environ.get('SCRIPTS_ROOT', '/etc/netbox/scripts')
+
 # Time zone (default: UTC)
 TIME_ZONE = os.environ.get('TIME_ZONE', 'UTC')
-
-# The Webhook event backend is disabled by default. Set this to True to enable it. Note that this requires a Redis
-# database be configured and accessible by NetBox (see `REDIS` below).
-WEBHOOKS_ENABLED = os.environ.get('WEBHOOKS_ENABLED', 'False').lower() == 'true'
 
 # Date/time formatting. See the following link for supported formats:
 # https://docs.djangoproject.com/en/dev/ref/templates/builtins/#date
