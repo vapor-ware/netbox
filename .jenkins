@@ -131,6 +131,7 @@ spec:
         build(
           job: '/vapor-xyz/netbox-deploy-dev',
           wait: true,
+          parameters: [string(name: 'IMAGE_TAG', value: "${env.TAG}")]
         )
       }
     }
