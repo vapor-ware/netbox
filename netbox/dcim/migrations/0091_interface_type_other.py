@@ -5,6 +5,9 @@ def interface_type_to_slug(apps, schema_editor):
     Interface = apps.get_model('dcim', 'Interface')
     Interface.objects.filter(type=32767).update(type='other')
 
+    Interface = apps.get_model('dcim', 'Interface')
+    Interface.objects.filter(type=32766).update(type='keystone')
+
 
 class Migration(migrations.Migration):
 
