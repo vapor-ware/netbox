@@ -25,7 +25,7 @@ from extras.models import CustomField, CustomFieldValue, ExportTemplate
 from extras.querysets import CustomFieldQueryset
 from utilities.exceptions import AbortTransaction
 from utilities.forms import BootstrapMixin, CSVDataField
-from utilities.utils import csv_format, prepare_cloned_fields, querydict_to_dict
+from utilities.utils import csv_format, prepare_cloned_fields
 from .error_handlers import handle_protectederror
 from .forms import ConfirmationForm, ImportForm
 from .paginator import EnhancedPaginator
@@ -544,7 +544,7 @@ class BulkImportView(GetReturnURLMixin, View):
 
         return ImportForm(*args, **kwargs)
 
-    def _save_obj(self, obj_form):
+    def _save_obj(self, obj_form, request):
         """
         Provide a hook to modify the object immediately before saving it (e.g. to encrypt secret data).
         """
@@ -573,7 +573,7 @@ class BulkImportView(GetReturnURLMixin, View):
                     for row, data in enumerate(form.cleaned_data['csv'], start=1):
                         obj_form = self.model_form(data)
                         if obj_form.is_valid():
-                            obj = self._save_obj(obj_form)
+                            obj = self._save_obj(obj_form, request)
                             new_objs.append(obj)
                         else:
                             for field, err in obj_form.errors.items():
@@ -716,7 +716,16 @@ class BulkEditView(GetReturnURLMixin, View):
                     messages.error(self.request, "{} failed validation: {}".format(obj, e))
 
         else:
-            form = self.form(model, initial={'pk': pk_list})
+            # Include the PK list as initial data for the form
+            initial_data = {'pk': pk_list}
+
+            # Check for other contextual data needed for the form. We avoid passing all of request.GET because the
+            # filter values will conflict with the bulk edit form fields.
+            # TODO: Find a better way to accomplish this
+            if 'device' in request.GET:
+                initial_data['device'] = request.GET.get('device')
+
+            form = self.form(model, initial=initial_data)
 
         # Retrieve objects being edited
         table = self.table(self.queryset.filter(pk__in=pk_list), orderable=False)
