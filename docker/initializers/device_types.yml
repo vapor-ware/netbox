@@ -18,8 +18,3 @@
   part_number: '700747'
   slug: vec-cart-v3
   u_height: 0
-- manufacturer: Vapor, IO
-  model: VEC Sled v2
-  slug: vec-sled-v2
-  subdevice_role: True
-  u_height: 1
