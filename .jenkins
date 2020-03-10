@@ -1,10 +1,10 @@
 def getSafeBranchName() {
-	return "${env.BRANCH_NAME}".replace('/', '-')
+    return "${env.BRANCH_NAME}".replace('/', '-')
 }
 
 def getTagName() {
-	def branchName = getSafeBranchName()
-	return "${branchName}.${env.BUILD_NUMBER}"
+    def branchName = getSafeBranchName()
+    return "${branchName}.${env.BUILD_NUMBER}"
 }
 
 
