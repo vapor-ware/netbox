@@ -1,1 +1,6 @@
-device_role: 'customer-network-locker'
+- device_role: 'customer-network-locker'
+  template: 'customer-locker'
+  ports: 12
+- device_role: 'access-switch'
+  template: 'efr'
+  ports: 46
