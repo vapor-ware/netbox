@@ -1,3 +1,13 @@
+- device_role: Access Switch
+  device_type: QFX5120-48Y-8C
+  face: front
+  name: EFR1.EMUL8R.000
+  site: Local Emulator
+- device_role: Access Switch
+  device_type: QFX5120-48Y-8C
+  face: front
+  name: EFR2.EMUL8R.000
+  site: Local Emulator
 - custom_fields:
     sf_id: a6d8c2a0-b4cf-4940-a53f-e356354d78c9
   device_role: Customer Compute Locker
