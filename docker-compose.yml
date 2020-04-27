@@ -35,7 +35,7 @@ services:
     command:
     - rqworker
   nginx:
-    command: nginx -g 'daemon off;' -c /etc/netbox-nginx/nginx.conf
+    command: nginx -c /etc/netbox-nginx/nginx.conf
     image: nginx
     depends_on:
     - netbox
