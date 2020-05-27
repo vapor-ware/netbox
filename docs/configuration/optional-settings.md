@@ -86,7 +86,12 @@ CORS_ORIGIN_WHITELIST = [
 
 Default: False
 
-This setting enables debugging. This should be done only during development or troubleshooting. Never enable debugging on a production system, as it can expose sensitive data to unauthenticated users.
+This setting enables debugging. This should be done only during development or troubleshooting. Note that only clients
+which access NetBox from a recognized [internal IP address](#internal_ips) will see debugging tools in the user
+interface.
+
+!!! warning
+    Never enable debugging on a production system, as it can expose sensitive data to unauthenticated users.
 
 ---
 
@@ -108,16 +113,20 @@ The file path to NetBox's documentation. This is used when presenting context-se
 
 ## EMAIL
 
-In order to send email, NetBox needs an email server configured. The following items can be defined within the `EMAIL` setting:
+In order to send email, NetBox needs an email server configured. The following items can be defined within the `EMAIL` configuration parameter:
 
-* SERVER - Host name or IP address of the email server (use `localhost` if running locally)
-* PORT - TCP port to use for the connection (default: 25)
-* USERNAME - Username with which to authenticate
-* PASSSWORD - Password with which to authenticate
-* TIMEOUT - Amount of time to wait for a connection (seconds)
-* FROM_EMAIL - Sender address for emails sent by NetBox
+* `SERVER` - Host name or IP address of the email server (use `localhost` if running locally)
+* `PORT` - TCP port to use for the connection (default: `25`)
+* `USERNAME` - Username with which to authenticate
+* `PASSSWORD` - Password with which to authenticate
+* `USE_SSL` - Use SSL when connecting to the server (default: `False`). Mutually exclusive with `USE_TLS`.
+* `USE_TLS` - Use TLS when connecting to the server (default: `False`). Mutually exclusive with `USE_SSL`.
+* `SSL_CERTFILE` - Path to the PEM-formatted SSL certificate file (optional)
+* `SSL_KEYFILE` - Path to the PEM-formatted SSL private key file (optional)
+* `TIMEOUT` - Amount of time to wait for a connection, in seconds (default: `10`)
+* `FROM_EMAIL` - Sender address for emails sent by NetBox (default: `root@localhost`)
 
-Email is sent from NetBox only for critical events. If you would like to test the email server configuration please use the django function [send_mail()](https://docs.djangoproject.com/en/stable/topics/email/#send-mail):
+Email is sent from NetBox only for critical events or if configured for [logging](#logging). If you would like to test the email server configuration please use the django function [send_mail()](https://docs.djangoproject.com/en/stable/topics/email/#send-mail):
 
 ```
 # python ./manage.py nbshell
@@ -165,6 +174,31 @@ Enforcement of unique IP space can be toggled on a per-VRF basis. To enforce uni
 
 ---
 
+## HTTP_PROXIES
+
+Default: None
+
+A dictionary of HTTP proxies to use for outbound requests originating from NetBox (e.g. when sending webhooks). Proxies should be specified by schema as per the [Python requests library documentation](https://2.python-requests.org/en/master/user/advanced/). For example:
+
+```python
+HTTP_PROXIES = {
+    'http': 'http://10.10.1.10:3128',
+    'https': 'http://10.10.1.10:1080',
+}
+```
+
+---
+
+## INTERNAL_IPS
+
+Default: `('127.0.0.1', '::1',)`
+
+A list of IP addresses recognized as internal to the system, used to control the display of debugging output. For
+example, the debugging toolbar will be viewable only when a client is accessing NetBox from one of the listed IP
+addresses (and [`DEBUG`](#debug) is true).
+
+---
+
 ## LOGGING
 
 By default, all messages of INFO severity or higher will be logged to the console. Additionally, if `DEBUG` is False and email access has been configured, ERROR and CRITICAL messages will be emailed to the users defined in `ADMINS`.
@@ -190,6 +224,14 @@ LOGGING = {
     },
 }
 ```
+
+### Available Loggers
+
+* `netbox.auth.*` - Authentication events
+* `netbox.api.views.*` - Views which handle business logic for the REST API
+* `netbox.reports.*` - Report execution (`module.name`)
+* `netbox.scripts.*` - Custom script execution (`module.name`)
+* `netbox.views.*` - Views which handle business logic for the web UI
 
 ---
 
@@ -291,11 +333,110 @@ Determine how many objects to display per page within each list of objects.
 
 ---
 
+## PLUGINS
+
+Default: Empty
+
+A list of installed [NetBox plugins](../../plugins/) to enable. Plugins will not take effect unless they are listed here.
+
+!!! warning
+    Plugins extend NetBox by allowing external code to run with the same access and privileges as NetBox itself. Only install plugins from trusted sources. The NetBox maintainers make absolutely no guarantees about the integrity or security of your installation with plugins enabled.
+
+---
+
+## PLUGINS_CONFIG
+
+Default: Empty
+
+This parameter holds configuration settings for individual NetBox plugins. It is defined as a dictionary, with each key using the name of an installed plugin. The specific parameters supported are unique to each plugin: Reference the plugin's documentation to determine the supported parameters. An example configuration is shown below:
+
+```python
+PLUGINS_CONFIG = {
+    'plugin1': {
+        'foo': 123,
+        'bar': True
+    },
+    'plugin2': {
+        'foo': 456,
+    },
+}
+```
+
+Note that a plugin must be listed in `PLUGINS` for its configuration to take effect.
+
+---
+
 ## PREFER_IPV4
 
 Default: False
 
 When determining the primary IP address for a device, IPv6 is preferred over IPv4 by default. Set this to True to prefer IPv4 instead.
+
+---
+
+## REMOTE_AUTH_ENABLED
+
+Default: `False`
+
+NetBox can be configured to support remote user authentication by inferring user authentication from an HTTP header set by the HTTP reverse proxy (e.g. nginx or Apache). Set this to `True` to enable this functionality. (Local authentication will still take effect as a fallback.)
+
+---
+
+## REMOTE_AUTH_BACKEND
+
+Default: `'utilities.auth_backends.RemoteUserBackend'`
+
+Python path to the custom [Django authentication backend](https://docs.djangoproject.com/en/stable/topics/auth/customizing/) to use for external user authentication, if not using NetBox's built-in backend. (Requires `REMOTE_AUTH_ENABLED`.)
+
+---
+
+## REMOTE_AUTH_HEADER
+
+Default: `'HTTP_REMOTE_USER'`
+
+When remote user authentication is in use, this is the name of the HTTP header which informs NetBox of the currently authenticated user. (Requires `REMOTE_AUTH_ENABLED`.)
+
+---
+
+## REMOTE_AUTH_AUTO_CREATE_USER
+
+Default: `False`
+
+If true, NetBox will automatically create local accounts for users authenticated via a remote service. (Requires `REMOTE_AUTH_ENABLED`.)
+
+---
+
+## REMOTE_AUTH_DEFAULT_GROUPS
+
+Default: `[]` (Empty list)
+
+The list of groups to assign a new user account when created using remote authentication. (Requires `REMOTE_AUTH_ENABLED`.)
+
+---
+
+## REMOTE_AUTH_DEFAULT_PERMISSIONS
+
+Default: `[]` (Empty list)
+
+The list of permissions to assign a new user account when created using remote authentication. (Requires `REMOTE_AUTH_ENABLED`.)
+
+---
+
+## RELEASE_CHECK_TIMEOUT
+
+Default: 86,400 (24 hours)
+
+The number of seconds to retain the latest version that is fetched from the GitHub API before automatically invalidating it and fetching it from the API again. This must be set to at least one hour (3600 seconds).
+
+---
+
+## RELEASE_CHECK_URL
+
+Default: None
+
+The releases of this repository are checked to detect new releases, which are shown on the home page of the web interface. You can change this to your own fork of the NetBox repository, or set it to `None` to disable the check. The URL provided **must** be compatible with the GitHub API.
+
+Use `'https://api.github.com/repos/netbox-community/netbox/releases'` to check for release in the official NetBox repository.
 
 ---
 

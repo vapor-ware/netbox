@@ -4,10 +4,10 @@ from django.contrib.auth.models import User
 from extras.filters import CustomFieldFilterSet, LocalConfigContextFilterSet, CreatedUpdatedFilterSet
 from tenancy.filters import TenancyFilterSet
 from tenancy.models import Tenant
-from utilities.constants import COLOR_CHOICES
+from utilities.choices import ColorChoices
 from utilities.filters import (
     BaseFilterSet, MultiValueCharFilter, MultiValueMACAddressFilter, MultiValueNumberFilter,
-    NameSlugSearchFilterSet, NumericInFilter, TagFilter, TreeNodeMultipleChoiceFilter,
+    NameSlugSearchFilterSet, TagFilter, TreeNodeMultipleChoiceFilter,
 )
 from virtualization.models import Cluster
 from .choices import *
@@ -74,14 +74,10 @@ class RegionFilterSet(BaseFilterSet, NameSlugSearchFilterSet, CustomFieldFilterS
 
     class Meta:
         model = Region
-        fields = ['id', 'name', 'slug']
+        fields = ['id', 'name', 'slug', 'description']
 
 
 class SiteFilterSet(BaseFilterSet, TenancyFilterSet, CustomFieldFilterSet, CreatedUpdatedFilterSet):
-    id__in = NumericInFilter(
-        field_name='id',
-        lookup_expr='in'
-    )
     q = django_filters.CharFilter(
         method='search',
         label='Search',
@@ -157,10 +153,20 @@ class RackGroupFilterSet(BaseFilterSet, NameSlugSearchFilterSet):
         to_field_name='slug',
         label='Site (slug)',
     )
+    parent_id = django_filters.ModelMultipleChoiceFilter(
+        queryset=RackGroup.objects.all(),
+        label='Rack group (ID)',
+    )
+    parent = django_filters.ModelMultipleChoiceFilter(
+        field_name='parent__slug',
+        queryset=RackGroup.objects.all(),
+        to_field_name='slug',
+        label='Rack group (slug)',
+    )
 
     class Meta:
         model = RackGroup
-        fields = ['id', 'name', 'slug']
+        fields = ['id', 'name', 'slug', 'description']
 
 
 class RackRoleFilterSet(BaseFilterSet, NameSlugSearchFilterSet):
@@ -171,10 +177,6 @@ class RackRoleFilterSet(BaseFilterSet, NameSlugSearchFilterSet):
 
 
 class RackFilterSet(BaseFilterSet, TenancyFilterSet, CustomFieldFilterSet, CreatedUpdatedFilterSet):
-    id__in = NumericInFilter(
-        field_name='id',
-        lookup_expr='in'
-    )
     q = django_filters.CharFilter(
         method='search',
         label='Search',
@@ -202,15 +204,18 @@ class RackFilterSet(BaseFilterSet, TenancyFilterSet, CustomFieldFilterSet, Creat
         to_field_name='slug',
         label='Site (slug)',
     )
-    group_id = django_filters.ModelMultipleChoiceFilter(
+    group_id = TreeNodeMultipleChoiceFilter(
         queryset=RackGroup.objects.all(),
-        label='Group (ID)',
+        field_name='group',
+        lookup_expr='in',
+        label='Rack group (ID)',
     )
-    group = django_filters.ModelMultipleChoiceFilter(
-        field_name='group__slug',
+    group = TreeNodeMultipleChoiceFilter(
         queryset=RackGroup.objects.all(),
+        field_name='group',
+        lookup_expr='in',
         to_field_name='slug',
-        label='Group',
+        label='Rack group (slug)',
     )
     status = django_filters.MultipleChoiceFilter(
         choices=RackStatusChoices,
@@ -251,10 +256,6 @@ class RackFilterSet(BaseFilterSet, TenancyFilterSet, CustomFieldFilterSet, Creat
 
 
 class RackReservationFilterSet(BaseFilterSet, TenancyFilterSet):
-    id__in = NumericInFilter(
-        field_name='id',
-        lookup_expr='in'
-    )
     q = django_filters.CharFilter(
         method='search',
         label='Search',
@@ -274,16 +275,18 @@ class RackReservationFilterSet(BaseFilterSet, TenancyFilterSet):
         to_field_name='slug',
         label='Site (slug)',
     )
-    group_id = django_filters.ModelMultipleChoiceFilter(
+    group_id = TreeNodeMultipleChoiceFilter(
+        queryset=RackGroup.objects.all(),
         field_name='rack__group',
-        queryset=RackGroup.objects.all(),
-        label='Group (ID)',
+        lookup_expr='in',
+        label='Rack group (ID)',
     )
-    group = django_filters.ModelMultipleChoiceFilter(
-        field_name='rack__group__slug',
+    group = TreeNodeMultipleChoiceFilter(
         queryset=RackGroup.objects.all(),
+        field_name='rack__group',
+        lookup_expr='in',
         to_field_name='slug',
-        label='Group',
+        label='Rack group (slug)',
     )
     user_id = django_filters.ModelMultipleChoiceFilter(
         queryset=User.objects.all(),
@@ -298,7 +301,7 @@ class RackReservationFilterSet(BaseFilterSet, TenancyFilterSet):
 
     class Meta:
         model = RackReservation
-        fields = ['created']
+        fields = ['id', 'created']
 
     def search(self, queryset, name, value):
         if not value.strip():
@@ -315,14 +318,10 @@ class ManufacturerFilterSet(BaseFilterSet, NameSlugSearchFilterSet):
 
     class Meta:
         model = Manufacturer
-        fields = ['id', 'name', 'slug']
+        fields = ['id', 'name', 'slug', 'description']
 
 
 class DeviceTypeFilterSet(BaseFilterSet, CustomFieldFilterSet, CreatedUpdatedFilterSet):
-    id__in = NumericInFilter(
-        field_name='id',
-        lookup_expr='in'
-    )
     q = django_filters.CharFilter(
         method='search',
         label='Search',
@@ -370,7 +369,7 @@ class DeviceTypeFilterSet(BaseFilterSet, CustomFieldFilterSet, CreatedUpdatedFil
     class Meta:
         model = DeviceType
         fields = [
-            'model', 'slug', 'part_number', 'u_height', 'is_full_depth', 'subdevice_role',
+            'id', 'model', 'slug', 'part_number', 'u_height', 'is_full_depth', 'subdevice_role',
         ]
 
     def search(self, queryset, name, value):
@@ -494,7 +493,7 @@ class PlatformFilterSet(BaseFilterSet, NameSlugSearchFilterSet):
 
     class Meta:
         model = Platform
-        fields = ['id', 'name', 'slug', 'napalm_driver']
+        fields = ['id', 'name', 'slug', 'napalm_driver', 'description']
 
 
 class DeviceFilterSet(
@@ -504,10 +503,6 @@ class DeviceFilterSet(
     CustomFieldFilterSet,
     CreatedUpdatedFilterSet
 ):
-    id__in = NumericInFilter(
-        field_name='id',
-        lookup_expr='in'
-    )
     q = django_filters.CharFilter(
         method='search',
         label='Search',
@@ -571,9 +566,10 @@ class DeviceFilterSet(
         to_field_name='slug',
         label='Site name (slug)',
     )
-    rack_group_id = django_filters.ModelMultipleChoiceFilter(
-        field_name='rack__group',
+    rack_group_id = TreeNodeMultipleChoiceFilter(
         queryset=RackGroup.objects.all(),
+        field_name='rack__group',
+        lookup_expr='in',
         label='Rack group (ID)',
     )
     rack_id = django_filters.ModelMultipleChoiceFilter(
@@ -1088,7 +1084,7 @@ class CableFilterSet(BaseFilterSet):
         choices=CableStatusChoices
     )
     color = django_filters.MultipleChoiceFilter(
-        choices=COLOR_CHOICES
+        choices=ColorChoices
     )
     device_id = MultiValueNumberFilter(
         method='filter_device'
@@ -1236,10 +1232,6 @@ class InterfaceConnectionFilterSet(BaseFilterSet):
 
 
 class PowerPanelFilterSet(BaseFilterSet):
-    id__in = NumericInFilter(
-        field_name='id',
-        lookup_expr='in'
-    )
     q = django_filters.CharFilter(
         method='search',
         label='Search',
@@ -1267,15 +1259,16 @@ class PowerPanelFilterSet(BaseFilterSet):
         to_field_name='slug',
         label='Site name (slug)',
     )
-    rack_group_id = django_filters.ModelMultipleChoiceFilter(
-        field_name='rack_group',
+    rack_group_id = TreeNodeMultipleChoiceFilter(
         queryset=RackGroup.objects.all(),
+        field_name='rack_group',
+        lookup_expr='in',
         label='Rack group (ID)',
     )
 
     class Meta:
         model = PowerPanel
-        fields = ['name']
+        fields = ['id', 'name']
 
     def search(self, queryset, name, value):
         if not value.strip():
@@ -1287,10 +1280,6 @@ class PowerPanelFilterSet(BaseFilterSet):
 
 
 class PowerFeedFilterSet(BaseFilterSet, CustomFieldFilterSet, CreatedUpdatedFilterSet):
-    id__in = NumericInFilter(
-        field_name='id',
-        lookup_expr='in'
-    )
     q = django_filters.CharFilter(
         method='search',
         label='Search',
@@ -1332,7 +1321,7 @@ class PowerFeedFilterSet(BaseFilterSet, CustomFieldFilterSet, CreatedUpdatedFilt
 
     class Meta:
         model = PowerFeed
-        fields = ['name', 'status', 'type', 'supply', 'phase', 'voltage', 'amperage', 'max_utilization']
+        fields = ['id', 'name', 'status', 'type', 'supply', 'phase', 'voltage', 'amperage', 'max_utilization']
 
     def search(self, queryset, name, value):
         if not value.strip():

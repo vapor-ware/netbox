@@ -2,7 +2,6 @@ from django.urls import path
 
 from extras.views import ObjectChangeLogView, ImageAttachmentEditView
 from ipam.views import ServiceCreateView
-from secrets.views import secret_add
 from . import views
 from .models import (
     Cable, ConsolePort, ConsoleServerPort, Device, DeviceRole, DeviceType, FrontPort, Interface, Manufacturer, Platform,
@@ -51,9 +50,11 @@ urlpatterns = [
 
     # Rack reservations
     path('rack-reservations/', views.RackReservationListView.as_view(), name='rackreservation_list'),
+    path('rack-reservations/add/', views.RackReservationCreateView.as_view(), name='rackreservation_add'),
     path('rack-reservations/import/', views.RackReservationImportView.as_view(), name='rackreservation_import'),
     path('rack-reservations/edit/', views.RackReservationBulkEditView.as_view(), name='rackreservation_bulk_edit'),
     path('rack-reservations/delete/', views.RackReservationBulkDeleteView.as_view(), name='rackreservation_bulk_delete'),
+    path('rack-reservations/<int:pk>/', views.RackReservationView.as_view(), name='rackreservation'),
     path('rack-reservations/<int:pk>/edit/', views.RackReservationEditView.as_view(), name='rackreservation_edit'),
     path('rack-reservations/<int:pk>/delete/', views.RackReservationDeleteView.as_view(), name='rackreservation_delete'),
     path('rack-reservations/<int:pk>/changelog/', ObjectChangeLogView.as_view(), name='rackreservation_changelog', kwargs={'model': RackReservation}),
@@ -69,7 +70,6 @@ urlpatterns = [
     path('racks/<int:pk>/edit/', views.RackEditView.as_view(), name='rack_edit'),
     path('racks/<int:pk>/delete/', views.RackDeleteView.as_view(), name='rack_delete'),
     path('racks/<int:pk>/changelog/', ObjectChangeLogView.as_view(), name='rack_changelog', kwargs={'model': Rack}),
-    path('racks/<int:rack>/reservations/add/', views.RackReservationCreateView.as_view(), name='rack_add_reservation'),
     path('racks/<int:object_id>/images/add/', ImageAttachmentEditView.as_view(), name='rack_add_image', kwargs={'model': Rack}),
 
     # Manufacturers
@@ -179,7 +179,6 @@ urlpatterns = [
     path('devices/<int:pk>/status/', views.DeviceStatusView.as_view(), name='device_status'),
     path('devices/<int:pk>/lldp-neighbors/', views.DeviceLLDPNeighborsView.as_view(), name='device_lldp_neighbors'),
     path('devices/<int:pk>/config/', views.DeviceConfigView.as_view(), name='device_config'),
-    path('devices/<int:pk>/add-secret/', secret_add, name='device_addsecret'),
     path('devices/<int:device>/services/assign/', ServiceCreateView.as_view(), name='device_service_assign'),
     path('devices/<int:object_id>/images/add/', ImageAttachmentEditView.as_view(), name='device_add_image', kwargs={'model': Device}),
 
@@ -279,13 +278,13 @@ urlpatterns = [
     path('rear-ports/<int:pk>/edit/', views.RearPortEditView.as_view(), name='rearport_edit'),
     path('rear-ports/<int:pk>/delete/', views.RearPortDeleteView.as_view(), name='rearport_delete'),
     path('rear-ports/<int:pk>/trace/', views.CableTraceView.as_view(), name='rearport_trace', kwargs={'model': RearPort}),
-    # path('devices/rear-ports/add/', views.DeviceBulkAddRearPortView.as_view(), name='device_bulk_add_rearport'),
+    path('devices/rear-ports/add/', views.DeviceBulkAddRearPortView.as_view(), name='device_bulk_add_rearport'),
 
     # Device bays
     path('device-bays/', views.DeviceBayListView.as_view(), name='devicebay_list'),
     path('device-bays/add/', views.DeviceBayCreateView.as_view(), name='devicebay_add'),
     path('device-bays/import/', views.DeviceBayBulkImportView.as_view(), name='devicebay_import'),
-    # TODO: Bulk edit view for DeviceBays
+    path('device-bays/edit/', views.DeviceBayBulkEditView.as_view(), name='devicebay_bulk_edit'),
     path('device-bays/rename/', views.DeviceBayBulkRenameView.as_view(), name='devicebay_bulk_rename'),
     path('device-bays/delete/', views.DeviceBayBulkDeleteView.as_view(), name='devicebay_bulk_delete'),
     path('device-bays/<int:pk>/edit/', views.DeviceBayEditView.as_view(), name='devicebay_edit'),
@@ -322,6 +321,9 @@ urlpatterns = [
     # Virtual chassis
     path('virtual-chassis/', views.VirtualChassisListView.as_view(), name='virtualchassis_list'),
     path('virtual-chassis/add/', views.VirtualChassisCreateView.as_view(), name='virtualchassis_add'),
+    path('virtual-chassis/edit/', views.VirtualChassisBulkEditView.as_view(), name='virtualchassis_bulk_edit'),
+    path('virtual-chassis/delete/', views.VirtualChassisBulkDeleteView.as_view(), name='virtualchassis_bulk_delete'),
+    path('virtual-chassis/<int:pk>/', views.VirtualChassisView.as_view(), name='virtualchassis'),
     path('virtual-chassis/<int:pk>/edit/', views.VirtualChassisEditView.as_view(), name='virtualchassis_edit'),
     path('virtual-chassis/<int:pk>/delete/', views.VirtualChassisDeleteView.as_view(), name='virtualchassis_delete'),
     path('virtual-chassis/<int:pk>/changelog/', ObjectChangeLogView.as_view(), name='virtualchassis_changelog', kwargs={'model': VirtualChassis}),

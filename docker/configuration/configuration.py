@@ -51,7 +51,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', read_secret('secret_key'))
 
 # Redis database settings. The Redis database is used for caching and background processing such as webhooks
 REDIS = {
-    'webhooks': {
+    'tasks': {
         'HOST': os.environ.get('REDIS_HOST', 'localhost'),
         'PORT': int(os.environ.get('REDIS_PORT', 6379)),
         'PASSWORD': os.environ.get('REDIS_PASSWORD', read_secret('redis_password')),
@@ -119,6 +119,10 @@ EMAIL = {
     'PASSWORD': os.environ.get('EMAIL_PASSWORD', read_secret('email_password')),
     'TIMEOUT': int(os.environ.get('EMAIL_TIMEOUT', 10)),  # seconds
     'FROM_EMAIL': os.environ.get('EMAIL_FROM', ''),
+    'USE_SSL': os.environ.get('EMAIL_USE_SSL', 'False').lower() == 'true',
+    'USE_TLS': os.environ.get('EMAIL_USE_TLS', 'False').lower() == 'true',
+    'SSL_CERTFILE': os.environ.get('EMAIL_SSL_CERTFILE', ''),
+    'SSL_KEYFILE': os.environ.get('EMAIL_SSL_KEYFILE', ''),
 }
 
 # Enforcement of unique IP space can be toggled on a per-VRF basis.
@@ -170,6 +174,15 @@ PAGINATE_COUNT = int(os.environ.get('PAGINATE_COUNT', 50))
 # When determining the primary IP address for a device, IPv6 is preferred over IPv4 by default. Set this to True to
 # prefer IPv4 instead.
 PREFER_IPV4 = os.environ.get('PREFER_IPV4', 'False').lower() == 'true'
+
+# This determines how often the GitHub API is called to check the latest release of NetBox in seconds. Must be at least 1 hour.
+RELEASE_CHECK_TIMEOUT = os.environ.get('RELEASE_CHECK_TIMEOUT', 24 * 3600)
+
+# This repository is used to check whether there is a new release of NetBox available. Set to None to disable the
+# version check or use the URL below to check for release in the official NetBox repository.
+# https://api.github.com/repos/netbox-community/netbox/releases
+RELEASE_CHECK_URL = os.environ.get('RELEASE_CHECK_URL', None)
+
 # The file path where custom reports will be stored. A trailing slash is not needed. Note that the default value of
 # this setting is derived from the installed location.
 REPORTS_ROOT = os.environ.get('REPORTS_ROOT', '/etc/netbox/reports')

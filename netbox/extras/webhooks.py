@@ -3,11 +3,12 @@ import hmac
 
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
+from django_rq import get_queue
 
 from extras.models import Webhook
 from utilities.api import get_serializer_for_model
 from .choices import *
-from .constants import *
+from .utils import FeatureQuery
 
 
 def generate_signature(request_body, secret):
@@ -16,7 +17,7 @@ def generate_signature(request_body, secret):
     """
     hmac_prep = hmac.new(
         key=secret.encode('utf8'),
-        msg=request_body.encode('utf8'),
+        msg=request_body,
         digestmod=hashlib.sha512
     )
     return hmac_prep.hexdigest()
@@ -29,7 +30,7 @@ def enqueue_webhooks(instance, user, request_id, action):
     """
     obj_type = ContentType.objects.get_for_model(instance.__class__)
 
-    webhook_models = ContentType.objects.filter(WEBHOOK_MODELS)
+    webhook_models = ContentType.objects.filter(FeatureQuery('webhooks').get_query())
     if obj_type not in webhook_models:
         return
 
@@ -49,12 +50,8 @@ def enqueue_webhooks(instance, user, request_id, action):
         }
         serializer = serializer_class(instance, context=serializer_context)
 
-        # We must only import django_rq if the Webhooks feature is enabled.
-        # Only if we have gotten to ths point, is the feature enabled
-        from django_rq import get_queue
+        # Enqueue the webhooks
         webhook_queue = get_queue('default')
-
-        # enqueue the webhooks:
         for webhook in webhooks:
             webhook_queue.enqueue(
                 "extras.webhooks_worker.process_webhook",

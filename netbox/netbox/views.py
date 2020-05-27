@@ -1,8 +1,10 @@
 from collections import OrderedDict
 
+from django.conf import settings
 from django.db.models import Count, F
 from django.shortcuts import render
 from django.views.generic import View
+from packaging import version
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.views import APIView
@@ -18,13 +20,14 @@ from dcim.models import (
     Cable, ConsolePort, Device, DeviceType, Interface, PowerPanel, PowerFeed, PowerPort, Rack, RackGroup, Site, VirtualChassis
 )
 from dcim.tables import (
-    CableTable, DeviceDetailTable, DeviceTypeTable, PowerFeedTable, RackTable, RackGroupTable, SiteTable,
+    CableTable, DeviceTable, DeviceTypeTable, PowerFeedTable, RackTable, RackGroupTable, SiteTable,
     VirtualChassisTable,
 )
 from extras.models import ObjectChange, ReportResult
 from ipam.filters import AggregateFilterSet, IPAddressFilterSet, PrefixFilterSet, VLANFilterSet, VRFFilterSet
 from ipam.models import Aggregate, IPAddress, Prefix, VLAN, VRF
 from ipam.tables import AggregateTable, IPAddressTable, PrefixTable, VLANTable, VRFTable
+from netbox.releases import get_latest_release
 from secrets.filters import SecretFilterSet
 from secrets.models import Secret
 from secrets.tables import SecretTable
@@ -41,7 +44,7 @@ SEARCH_TYPES = OrderedDict((
     # Circuits
     ('provider', {
         'permission': 'circuits.view_provider',
-        'queryset': Provider.objects.all(),
+        'queryset': Provider.objects.annotate(count_circuits=Count('circuits')),
         'filterset': ProviderFilterSet,
         'table': ProviderTable,
         'url': 'circuits:provider_list',
@@ -90,7 +93,7 @@ SEARCH_TYPES = OrderedDict((
             'device_type__manufacturer', 'device_role', 'tenant', 'site', 'rack', 'primary_ip4', 'primary_ip6',
         ),
         'filterset': DeviceFilterSet,
-        'table': DeviceDetailTable,
+        'table': DeviceTable,
         'url': 'dcim:device_list',
     }),
     ('virtualchassis', {
@@ -240,11 +243,24 @@ class HomeView(View):
 
         }
 
+        # Check whether a new release is available. (Only for staff/superusers.)
+        new_release = None
+        if request.user.is_staff or request.user.is_superuser:
+            latest_release, release_url = get_latest_release()
+            if isinstance(latest_release, version.Version):
+                current_version = version.parse(settings.VERSION)
+                if latest_release > current_version:
+                    new_release = {
+                        'version': str(latest_release),
+                        'url': release_url,
+                    }
+
         return render(request, self.template_name, {
             'search_form': SearchForm(),
             'stats': stats,
             'report_results': ReportResult.objects.order_by('-created')[:10],
-            'changelog': ObjectChange.objects.prefetch_related('user', 'changed_object_type')[:15]
+            'changelog': ObjectChange.objects.prefetch_related('user', 'changed_object_type')[:15],
+            'new_release': new_release,
         })
 
 
@@ -325,6 +341,7 @@ class APIRootView(APIView):
             ('dcim', reverse('dcim-api:api-root', request=request, format=format)),
             ('extras', reverse('extras-api:api-root', request=request, format=format)),
             ('ipam', reverse('ipam-api:api-root', request=request, format=format)),
+            ('plugins', reverse('plugins-api:api-root', request=request, format=format)),
             ('secrets', reverse('secrets-api:api-root', request=request, format=format)),
             ('tenancy', reverse('tenancy-api:api-root', request=request, format=format)),
             ('virtualization', reverse('virtualization-api:api-root', request=request, format=format)),

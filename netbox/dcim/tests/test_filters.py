@@ -17,14 +17,15 @@ from virtualization.models import Cluster, ClusterType
 
 class RegionTestCase(TestCase):
     queryset = Region.objects.all()
+    filterset = RegionFilterSet
 
     @classmethod
     def setUpTestData(cls):
 
         regions = (
-            Region(name='Region 1', slug='region-1'),
-            Region(name='Region 2', slug='region-2'),
-            Region(name='Region 3', slug='region-3'),
+            Region(name='Region 1', slug='region-1', description='A'),
+            Region(name='Region 2', slug='region-2', description='B'),
+            Region(name='Region 3', slug='region-3', description='C'),
         )
         for region in regions:
             region.save()
@@ -41,24 +42,27 @@ class RegionTestCase(TestCase):
             region.save()
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
-        self.assertEqual(RegionFilterSet(params, self.queryset).qs.count(), 2)
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
         params = {'name': ['Region 1', 'Region 2']}
-        self.assertEqual(RegionFilterSet(params, self.queryset).qs.count(), 2)
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_slug(self):
         params = {'slug': ['region-1', 'region-2']}
-        self.assertEqual(RegionFilterSet(params, self.queryset).qs.count(), 2)
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
+
+    def test_description(self):
+        params = {'description': ['A', 'B']}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_parent(self):
         parent_regions = Region.objects.filter(parent__isnull=True)[:2]
         params = {'parent_id': [parent_regions[0].pk, parent_regions[1].pk]}
-        self.assertEqual(RegionFilterSet(params, self.queryset).qs.count(), 4)
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 4)
         params = {'parent': [parent_regions[0].slug, parent_regions[1].slug]}
-        self.assertEqual(RegionFilterSet(params, self.queryset).qs.count(), 4)
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 4)
 
 
 class SiteTestCase(TestCase):
@@ -81,7 +85,8 @@ class SiteTestCase(TestCase):
             TenantGroup(name='Tenant group 2', slug='tenant-group-2'),
             TenantGroup(name='Tenant group 3', slug='tenant-group-3'),
         )
-        TenantGroup.objects.bulk_create(tenant_groups)
+        for tenantgroup in tenant_groups:
+            tenantgroup.save()
 
         tenants = (
             Tenant(name='Tenant 1', slug='tenant-1', group=tenant_groups[0]),
@@ -98,8 +103,7 @@ class SiteTestCase(TestCase):
         Site.objects.bulk_create(sites)
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -136,11 +140,6 @@ class SiteTestCase(TestCase):
 
     def test_contact_email(self):
         params = {'contact_email': ['contact1@example.com', 'contact2@example.com']}
-        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
-
-    def test_id__in(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id__in': ','.join([str(id) for id in id_list])}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_status(self):
@@ -191,16 +190,24 @@ class RackGroupTestCase(TestCase):
         )
         Site.objects.bulk_create(sites)
 
-        rack_groups = (
-            RackGroup(name='Rack Group 1', slug='rack-group-1', site=sites[0]),
-            RackGroup(name='Rack Group 2', slug='rack-group-2', site=sites[1]),
-            RackGroup(name='Rack Group 3', slug='rack-group-3', site=sites[2]),
+        parent_rack_groups = (
+            RackGroup(name='Parent Rack Group 1', slug='parent-rack-group-1', site=sites[0]),
+            RackGroup(name='Parent Rack Group 2', slug='parent-rack-group-2', site=sites[1]),
+            RackGroup(name='Parent Rack Group 3', slug='parent-rack-group-3', site=sites[2]),
         )
-        RackGroup.objects.bulk_create(rack_groups)
+        for rackgroup in parent_rack_groups:
+            rackgroup.save()
+
+        rack_groups = (
+            RackGroup(name='Rack Group 1', slug='rack-group-1', site=sites[0], parent=parent_rack_groups[0], description='A'),
+            RackGroup(name='Rack Group 2', slug='rack-group-2', site=sites[1], parent=parent_rack_groups[1], description='B'),
+            RackGroup(name='Rack Group 3', slug='rack-group-3', site=sites[2], parent=parent_rack_groups[2], description='C'),
+        )
+        for rackgroup in rack_groups:
+            rackgroup.save()
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -211,18 +218,29 @@ class RackGroupTestCase(TestCase):
         params = {'slug': ['rack-group-1', 'rack-group-2']}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
+    def test_description(self):
+        params = {'description': ['A', 'B']}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
+
     def test_region(self):
         regions = Region.objects.all()[:2]
         params = {'region_id': [regions[0].pk, regions[1].pk]}
-        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 4)
         params = {'region': [regions[0].slug, regions[1].slug]}
-        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 4)
 
     def test_site(self):
         sites = Site.objects.all()[:2]
         params = {'site_id': [sites[0].pk, sites[1].pk]}
-        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 4)
         params = {'site': [sites[0].slug, sites[1].slug]}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 4)
+
+    def test_parent(self):
+        parent_groups = RackGroup.objects.filter(name__startswith='Parent')[:2]
+        params = {'parent_id': [parent_groups[0].pk, parent_groups[1].pk]}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
+        params = {'parent': [parent_groups[0].slug, parent_groups[1].slug]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
 
@@ -241,8 +259,7 @@ class RackRoleTestCase(TestCase):
         RackRole.objects.bulk_create(rack_roles)
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -285,7 +302,8 @@ class RackTestCase(TestCase):
             RackGroup(name='Rack Group 2', slug='rack-group-2', site=sites[1]),
             RackGroup(name='Rack Group 3', slug='rack-group-3', site=sites[2]),
         )
-        RackGroup.objects.bulk_create(rack_groups)
+        for rackgroup in rack_groups:
+            rackgroup.save()
 
         rack_roles = (
             RackRole(name='Rack Role 1', slug='rack-role-1'),
@@ -299,7 +317,8 @@ class RackTestCase(TestCase):
             TenantGroup(name='Tenant group 2', slug='tenant-group-2'),
             TenantGroup(name='Tenant group 3', slug='tenant-group-3'),
         )
-        TenantGroup.objects.bulk_create(tenant_groups)
+        for tenantgroup in tenant_groups:
+            tenantgroup.save()
 
         tenants = (
             Tenant(name='Tenant 1', slug='tenant-1', group=tenant_groups[0]),
@@ -316,8 +335,7 @@ class RackTestCase(TestCase):
         Rack.objects.bulk_create(racks)
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -363,11 +381,6 @@ class RackTestCase(TestCase):
     def test_outer_unit(self):
         self.assertEqual(Rack.objects.filter(outer_unit__isnull=False).count(), 3)
         params = {'outer_unit': RackDimensionUnitChoices.UNIT_MILLIMETER}
-        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
-
-    def test_id__in(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id__in': ','.join([str(id) for id in id_list])}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_region(self):
@@ -442,7 +455,8 @@ class RackReservationTestCase(TestCase):
             RackGroup(name='Rack Group 2', slug='rack-group-2', site=sites[1]),
             RackGroup(name='Rack Group 3', slug='rack-group-3', site=sites[2]),
         )
-        RackGroup.objects.bulk_create(rack_groups)
+        for rackgroup in rack_groups:
+            rackgroup.save()
 
         racks = (
             Rack(name='Rack 1', site=sites[0], group=rack_groups[0]),
@@ -463,7 +477,8 @@ class RackReservationTestCase(TestCase):
             TenantGroup(name='Tenant group 2', slug='tenant-group-2'),
             TenantGroup(name='Tenant group 3', slug='tenant-group-3'),
         )
-        TenantGroup.objects.bulk_create(tenant_groups)
+        for tenantgroup in tenant_groups:
+            tenantgroup.save()
 
         tenants = (
             Tenant(name='Tenant 1', slug='tenant-1', group=tenant_groups[0]),
@@ -479,9 +494,8 @@ class RackReservationTestCase(TestCase):
         )
         RackReservation.objects.bulk_create(reservations)
 
-    def test_id__in(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id__in': ','.join([str(id) for id in id_list])}
+    def test_id(self):
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_site(self):
@@ -529,15 +543,14 @@ class ManufacturerTestCase(TestCase):
     def setUpTestData(cls):
 
         manufacturers = (
-            Manufacturer(name='Manufacturer 1', slug='manufacturer-1'),
-            Manufacturer(name='Manufacturer 2', slug='manufacturer-2'),
-            Manufacturer(name='Manufacturer 3', slug='manufacturer-3'),
+            Manufacturer(name='Manufacturer 1', slug='manufacturer-1', description='A'),
+            Manufacturer(name='Manufacturer 2', slug='manufacturer-2', description='B'),
+            Manufacturer(name='Manufacturer 3', slug='manufacturer-3', description='C'),
         )
         Manufacturer.objects.bulk_create(manufacturers)
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -546,6 +559,10 @@ class ManufacturerTestCase(TestCase):
 
     def test_slug(self):
         params = {'slug': ['manufacturer-1', 'manufacturer-2']}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
+
+    def test_description(self):
+        params = {'description': ['A', 'B']}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
 
@@ -605,6 +622,10 @@ class DeviceTypeTestCase(TestCase):
             DeviceBayTemplate(device_type=device_types[1], name='Device Bay 2'),
         ))
 
+    def test_id(self):
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
+
     def test_model(self):
         params = {'model': ['Model 1', 'Model 2']}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
@@ -630,11 +651,6 @@ class DeviceTypeTestCase(TestCase):
     def test_subdevice_role(self):
         params = {'subdevice_role': SubdeviceRoleChoices.ROLE_PARENT}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 1)
-
-    def test_id__in(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id__in': ','.join([str(id) for id in id_list])}
-        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_manufacturer(self):
         manufacturers = Manufacturer.objects.all()[:2]
@@ -709,8 +725,7 @@ class ConsolePortTemplateTestCase(TestCase):
         ))
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -746,8 +761,7 @@ class ConsoleServerPortTemplateTestCase(TestCase):
         ))
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -783,8 +797,7 @@ class PowerPortTemplateTestCase(TestCase):
         ))
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -828,8 +841,7 @@ class PowerOutletTemplateTestCase(TestCase):
         ))
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -870,8 +882,7 @@ class InterfaceTemplateTestCase(TestCase):
         ))
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -925,8 +936,7 @@ class FrontPortTemplateTestCase(TestCase):
         ))
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -967,8 +977,7 @@ class RearPortTemplateTestCase(TestCase):
         ))
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -1013,8 +1022,7 @@ class DeviceBayTemplateTestCase(TestCase):
         ))
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -1042,8 +1050,7 @@ class DeviceRoleTestCase(TestCase):
         DeviceRole.objects.bulk_create(device_roles)
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -1080,15 +1087,14 @@ class PlatformTestCase(TestCase):
         Manufacturer.objects.bulk_create(manufacturers)
 
         platforms = (
-            Platform(name='Platform 1', slug='platform-1', manufacturer=manufacturers[0], napalm_driver='driver-1'),
-            Platform(name='Platform 2', slug='platform-2', manufacturer=manufacturers[1], napalm_driver='driver-2'),
-            Platform(name='Platform 3', slug='platform-3', manufacturer=manufacturers[2], napalm_driver='driver-3'),
+            Platform(name='Platform 1', slug='platform-1', manufacturer=manufacturers[0], napalm_driver='driver-1', description='A'),
+            Platform(name='Platform 2', slug='platform-2', manufacturer=manufacturers[1], napalm_driver='driver-2', description='B'),
+            Platform(name='Platform 3', slug='platform-3', manufacturer=manufacturers[2], napalm_driver='driver-3', description='C'),
         )
         Platform.objects.bulk_create(platforms)
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -1097,6 +1103,10 @@ class PlatformTestCase(TestCase):
 
     def test_slug(self):
         params = {'slug': ['platform-1', 'platform-2']}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
+
+    def test_description(self):
+        params = {'description': ['A', 'B']}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_napalm_driver(self):
@@ -1166,7 +1176,8 @@ class DeviceTestCase(TestCase):
             RackGroup(name='Rack Group 2', slug='rack-group-2', site=sites[1]),
             RackGroup(name='Rack Group 3', slug='rack-group-3', site=sites[2]),
         )
-        RackGroup.objects.bulk_create(rack_groups)
+        for rackgroup in rack_groups:
+            rackgroup.save()
 
         racks = (
             Rack(name='Rack 1', site=sites[0], group=rack_groups[0]),
@@ -1188,7 +1199,8 @@ class DeviceTestCase(TestCase):
             TenantGroup(name='Tenant group 2', slug='tenant-group-2'),
             TenantGroup(name='Tenant group 3', slug='tenant-group-3'),
         )
-        TenantGroup.objects.bulk_create(tenant_groups)
+        for tenantgroup in tenant_groups:
+            tenantgroup.save()
 
         tenants = (
             Tenant(name='Tenant 1', slug='tenant-1', group=tenant_groups[0]),
@@ -1242,8 +1254,8 @@ class DeviceTestCase(TestCase):
 
         # Assign primary IPs for filtering
         ipaddresses = (
-            IPAddress(family=4, address='192.0.2.1/24', interface=interfaces[0]),
-            IPAddress(family=4, address='192.0.2.2/24', interface=interfaces[1]),
+            IPAddress(address='192.0.2.1/24', interface=interfaces[0]),
+            IPAddress(address='192.0.2.2/24', interface=interfaces[1]),
         )
         IPAddress.objects.bulk_create(ipaddresses)
         Device.objects.filter(pk=devices[0].pk).update(primary_ip4=ipaddresses[0])
@@ -1255,8 +1267,7 @@ class DeviceTestCase(TestCase):
         Device.objects.filter(pk=devices[1].pk).update(virtual_chassis=virtual_chassis, vc_position=2, vc_priority=2)
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -1281,11 +1292,6 @@ class DeviceTestCase(TestCase):
 
     def test_vc_priority(self):
         params = {'vc_priority': [1, 2]}
-        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
-
-    def test_id__in(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id__in': ','.join([str(id) for id in id_list])}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_manufacturer(self):
@@ -1497,8 +1503,7 @@ class ConsolePortTestCase(TestCase):
         # Third port is not connected
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -1593,8 +1598,7 @@ class ConsoleServerPortTestCase(TestCase):
         # Third port is not connected
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -1689,8 +1693,7 @@ class PowerPortTestCase(TestCase):
         # Third port is not connected
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -1793,8 +1796,7 @@ class PowerOutletTestCase(TestCase):
         # Third port is not connected
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -1891,9 +1893,8 @@ class InterfaceTestCase(TestCase):
         # Third pair is not connected
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:3]
-        params = {'id': [str(id) for id in id_list]}
-        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 3)
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
         params = {'name': ['Interface 1', 'Interface 2']}
@@ -2028,8 +2029,7 @@ class FrontPortTestCase(TestCase):
         # Third port is not connected
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -2121,8 +2121,7 @@ class RearPortTestCase(TestCase):
         # Third port is not connected
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -2209,8 +2208,7 @@ class DeviceBayTestCase(TestCase):
         DeviceBay.objects.bulk_create(device_bays)
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -2297,8 +2295,7 @@ class InventoryItemTestCase(TestCase):
         InventoryItem.objects.bulk_create(child_inventory_items)
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -2409,8 +2406,7 @@ class VirtualChassisTestCase(TestCase):
         Device.objects.filter(pk=devices[5].pk).update(virtual_chassis=virtual_chassis[2])
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_domain(self):
@@ -2498,8 +2494,7 @@ class CableTestCase(TestCase):
         Cable(termination_a=interfaces[11], termination_b=interfaces[0], label='Cable 6', type=CableTypeChoices.TYPE_CAT6, status=CableStatusChoices.STATUS_PLANNED, color='e91e63', length=20, length_unit=CableLengthUnitChoices.UNIT_METER).save()
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_label(self):
@@ -2584,7 +2579,8 @@ class PowerPanelTestCase(TestCase):
             RackGroup(name='Rack Group 2', slug='rack-group-2', site=sites[1]),
             RackGroup(name='Rack Group 3', slug='rack-group-3', site=sites[2]),
         )
-        RackGroup.objects.bulk_create(rack_groups)
+        for rackgroup in rack_groups:
+            rackgroup.save()
 
         power_panels = (
             PowerPanel(name='Power Panel 1', site=sites[0], rack_group=rack_groups[0]),
@@ -2592,6 +2588,10 @@ class PowerPanelTestCase(TestCase):
             PowerPanel(name='Power Panel 3', site=sites[2], rack_group=rack_groups[2]),
         )
         PowerPanel.objects.bulk_create(power_panels)
+
+    def test_id(self):
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
         params = {'name': ['Power Panel 1', 'Power Panel 2']}
@@ -2659,6 +2659,10 @@ class PowerFeedTestCase(TestCase):
             PowerFeed(power_panel=power_panels[2], rack=racks[2], name='Power Feed 3', status=PowerFeedStatusChoices.STATUS_OFFLINE, type=PowerFeedTypeChoices.TYPE_REDUNDANT, supply=PowerFeedSupplyChoices.SUPPLY_DC, phase=PowerFeedPhaseChoices.PHASE_SINGLE, voltage=300, amperage=300, max_utilization=30),
         )
         PowerFeed.objects.bulk_create(power_feeds)
+
+    def test_id(self):
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
         params = {'name': ['Power Feed 1', 'Power Feed 2']}

@@ -1,12 +1,12 @@
 from django import forms
-from taggit.forms import TagField
 
 from extras.forms import (
-    AddRemoveTagsForm, CustomFieldModelForm, CustomFieldBulkEditForm, CustomFieldFilterForm,
+    AddRemoveTagsForm, CustomFieldModelForm, CustomFieldBulkEditForm, CustomFieldFilterForm, CustomFieldModelCSVForm,
+    TagField,
 )
 from utilities.forms import (
-    APISelect, APISelectMultiple, BootstrapMixin, CommentField, DynamicModelChoiceField,
-    DynamicModelMultipleChoiceField, SlugField, TagFilterField,
+    APISelect, APISelectMultiple, BootstrapMixin, CommentField, CSVModelChoiceField, CSVModelForm,
+    DynamicModelChoiceField, DynamicModelMultipleChoiceField, SlugField, TagFilterField,
 )
 from .models import Tenant, TenantGroup
 
@@ -16,24 +16,34 @@ from .models import Tenant, TenantGroup
 #
 
 class TenantGroupForm(BootstrapMixin, forms.ModelForm):
+    parent = DynamicModelChoiceField(
+        queryset=TenantGroup.objects.all(),
+        required=False,
+        widget=APISelect(
+            api_url="/api/tenancy/tenant-groups/"
+        )
+    )
     slug = SlugField()
 
     class Meta:
         model = TenantGroup
         fields = [
-            'name', 'slug',
+            'parent', 'name', 'slug', 'description',
         ]
 
 
-class TenantGroupCSVForm(forms.ModelForm):
+class TenantGroupCSVForm(CSVModelForm):
+    parent = CSVModelChoiceField(
+        queryset=TenantGroup.objects.all(),
+        required=False,
+        to_field_name='name',
+        help_text='Parent group'
+    )
     slug = SlugField()
 
     class Meta:
         model = TenantGroup
         fields = TenantGroup.csv_headers
-        help_texts = {
-            'name': 'Group name',
-        }
 
 
 #
@@ -44,10 +54,7 @@ class TenantForm(BootstrapMixin, CustomFieldModelForm):
     slug = SlugField()
     group = DynamicModelChoiceField(
         queryset=TenantGroup.objects.all(),
-        required=False,
-        widget=APISelect(
-            api_url="/api/tenancy/tenant-groups/"
-        )
+        required=False
     )
     comments = CommentField()
     tags = TagField(
@@ -61,25 +68,18 @@ class TenantForm(BootstrapMixin, CustomFieldModelForm):
         )
 
 
-class TenantCSVForm(CustomFieldModelForm):
+class TenantCSVForm(CustomFieldModelCSVForm):
     slug = SlugField()
-    group = forms.ModelChoiceField(
+    group = CSVModelChoiceField(
         queryset=TenantGroup.objects.all(),
         required=False,
         to_field_name='name',
-        help_text='Name of parent group',
-        error_messages={
-            'invalid_choice': 'Group not found.'
-        }
+        help_text='Assigned group'
     )
 
     class Meta:
         model = Tenant
         fields = Tenant.csv_headers
-        help_texts = {
-            'name': 'Tenant name',
-            'comments': 'Free-form comments'
-        }
 
 
 class TenantBulkEditForm(BootstrapMixin, AddRemoveTagsForm, CustomFieldBulkEditForm):
@@ -89,10 +89,7 @@ class TenantBulkEditForm(BootstrapMixin, AddRemoveTagsForm, CustomFieldBulkEditF
     )
     group = DynamicModelChoiceField(
         queryset=TenantGroup.objects.all(),
-        required=False,
-        widget=APISelect(
-            api_url="/api/tenancy/tenant-groups/"
-        )
+        required=False
     )
 
     class Meta:
@@ -112,7 +109,6 @@ class TenantFilterForm(BootstrapMixin, CustomFieldFilterForm):
         to_field_name='slug',
         required=False,
         widget=APISelectMultiple(
-            api_url="/api/tenancy/tenant-groups/",
             value_field="slug",
             null_option=True,
         )
@@ -129,7 +125,6 @@ class TenancyForm(forms.Form):
         queryset=TenantGroup.objects.all(),
         required=False,
         widget=APISelect(
-            api_url="/api/tenancy/tenant-groups/",
             filter_for={
                 'tenant': 'group_id',
             },
@@ -140,10 +135,7 @@ class TenancyForm(forms.Form):
     )
     tenant = DynamicModelChoiceField(
         queryset=Tenant.objects.all(),
-        required=False,
-        widget=APISelect(
-            api_url='/api/tenancy/tenants/'
-        )
+        required=False
     )
 
     def __init__(self, *args, **kwargs):
@@ -164,7 +156,6 @@ class TenancyFilterForm(forms.Form):
         to_field_name='slug',
         required=False,
         widget=APISelectMultiple(
-            api_url="/api/tenancy/tenant-groups/",
             value_field="slug",
             null_option=True,
             filter_for={
@@ -177,7 +168,6 @@ class TenancyFilterForm(forms.Form):
         to_field_name='slug',
         required=False,
         widget=APISelectMultiple(
-            api_url="/api/tenancy/tenants/",
             value_field="slug",
             null_option=True,
         )

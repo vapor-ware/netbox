@@ -3,7 +3,7 @@ from django.db.models import Q
 
 from dcim.models import Device
 from extras.filters import CustomFieldFilterSet, CreatedUpdatedFilterSet
-from utilities.filters import BaseFilterSet, NameSlugSearchFilterSet, NumericInFilter, TagFilter
+from utilities.filters import BaseFilterSet, NameSlugSearchFilterSet, TagFilter
 from .models import Secret, SecretRole
 
 
@@ -21,10 +21,6 @@ class SecretRoleFilterSet(BaseFilterSet, NameSlugSearchFilterSet):
 
 
 class SecretFilterSet(BaseFilterSet, CustomFieldFilterSet, CreatedUpdatedFilterSet):
-    id__in = NumericInFilter(
-        field_name='id',
-        lookup_expr='in'
-    )
     q = django_filters.CharFilter(
         method='search',
         label='Search',
@@ -53,7 +49,7 @@ class SecretFilterSet(BaseFilterSet, CustomFieldFilterSet, CreatedUpdatedFilterS
 
     class Meta:
         model = Secret
-        fields = ['name']
+        fields = ['id', 'name']
 
     def search(self, queryset, name, value):
         if not value.strip():

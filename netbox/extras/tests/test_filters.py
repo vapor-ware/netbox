@@ -3,9 +3,9 @@ from django.test import TestCase
 
 from dcim.models import DeviceRole, Platform, Region, Site
 from extras.choices import *
-from extras.constants import GRAPH_MODELS
 from extras.filters import *
-from extras.models import ConfigContext, ExportTemplate, Graph
+from extras.utils import FeatureQuery
+from extras.models import ConfigContext, ExportTemplate, Graph, Tag
 from tenancy.models import Tenant, TenantGroup
 from virtualization.models import Cluster, ClusterGroup, ClusterType
 
@@ -18,7 +18,7 @@ class GraphTestCase(TestCase):
     def setUpTestData(cls):
 
         # Get the first three available types
-        content_types = ContentType.objects.filter(GRAPH_MODELS)[:3]
+        content_types = ContentType.objects.filter(FeatureQuery('graphs').get_query())[:3]
 
         graphs = (
             Graph(name='Graph 1', type=content_types[0], template_language=TemplateLanguageChoices.LANGUAGE_DJANGO, source='http://example.com/1'),
@@ -27,16 +27,19 @@ class GraphTestCase(TestCase):
         )
         Graph.objects.bulk_create(graphs)
 
+    def test_id(self):
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
+
     def test_name(self):
         params = {'name': ['Graph 1', 'Graph 2']}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_type(self):
-        content_type = ContentType.objects.filter(GRAPH_MODELS).first()
+        content_type = ContentType.objects.filter(FeatureQuery('graphs').get_query()).first()
         params = {'type': content_type.pk}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 1)
 
-    # TODO: Remove in v2.8
     def test_template_language(self):
         params = {'template_language': TemplateLanguageChoices.LANGUAGE_JINJA2}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
@@ -57,6 +60,10 @@ class ExportTemplateTestCase(TestCase):
             ExportTemplate(name='Export Template 3', content_type=content_types[2], template_language=TemplateLanguageChoices.LANGUAGE_JINJA2, template_code='TESTING'),
         )
         ExportTemplate.objects.bulk_create(export_templates)
+
+    def test_id(self):
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
         params = {'name': ['Export Template 1', 'Export Template 2']}
@@ -128,7 +135,8 @@ class ConfigContextTestCase(TestCase):
             TenantGroup(name='Tenant Group 2', slug='tenant-group-2'),
             TenantGroup(name='Tenant Group 3', slug='tenant-group-3'),
         )
-        TenantGroup.objects.bulk_create(tenant_groups)
+        for tenantgroup in tenant_groups:
+            tenantgroup.save()
 
         tenants = (
             Tenant(name='Tenant 1', slug='tenant-1'),
@@ -152,6 +160,10 @@ class ConfigContextTestCase(TestCase):
             c.clusters.set([clusters[i]])
             c.tenant_groups.set([tenant_groups[i]])
             c.tenants.set([tenants[i]])
+
+    def test_id(self):
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
         params = {'name': ['Config Context 1', 'Config Context 2']}
@@ -215,6 +227,37 @@ class ConfigContextTestCase(TestCase):
         params = {'tenant_id': [tenants[0].pk, tenants[1].pk]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
         params = {'tenant': [tenants[0].slug, tenants[1].slug]}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
+
+
+class TagTestCase(TestCase):
+    queryset = Tag.objects.all()
+    filterset = TagFilterSet
+
+    @classmethod
+    def setUpTestData(cls):
+
+        tags = (
+            Tag(name='Tag 1', slug='tag-1', color='ff0000'),
+            Tag(name='Tag 2', slug='tag-2', color='00ff00'),
+            Tag(name='Tag 3', slug='tag-3', color='0000ff'),
+        )
+        Tag.objects.bulk_create(tags)
+
+    def test_id(self):
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
+
+    def test_name(self):
+        params = {'name': ['Tag 1', 'Tag 2']}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
+
+    def test_slug(self):
+        params = {'slug': ['tag-1', 'tag-2']}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
+
+    def test_color(self):
+        params = {'color': ['ff0000', '00ff00']}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
 

@@ -64,7 +64,7 @@ class RegionSerializer(CustomFieldModelSerializer):
 
     class Meta:
         model = Region
-        fields = ['id', 'name', 'slug', 'parent', 'site_count', 'custom_fields']
+        fields = ['id', 'name', 'slug', 'parent', 'description', 'site_count', 'custom_fields']
 
 
 class SiteSerializer(TaggitSerializer, CustomFieldModelSerializer):
@@ -96,11 +96,12 @@ class SiteSerializer(TaggitSerializer, CustomFieldModelSerializer):
 
 class RackGroupSerializer(ValidatedModelSerializer):
     site = NestedSiteSerializer()
+    parent = NestedRackGroupSerializer(required=False, allow_null=True)
     rack_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = RackGroup
-        fields = ['id', 'name', 'slug', 'site', 'rack_count']
+        fields = ['id', 'name', 'slug', 'site', 'parent', 'description', 'rack_count']
 
 
 class RackRoleSerializer(ValidatedModelSerializer):
@@ -142,8 +143,7 @@ class RackSerializer(TaggitSerializer, CustomFieldModelSerializer):
         # Validate uniqueness of (group, facility_id) since we omitted the automatically-created validator from Meta.
         if data.get('facility_id', None):
             validator = UniqueTogetherValidator(queryset=Rack.objects.all(), fields=('group', 'facility_id'))
-            validator.set_context(self)
-            validator(data)
+            validator(data, self)
 
         # Enforce model validation
         super().validate(data)
@@ -218,7 +218,9 @@ class ManufacturerSerializer(ValidatedModelSerializer):
 
     class Meta:
         model = Manufacturer
-        fields = ['id', 'name', 'slug', 'devicetype_count', 'inventoryitem_count', 'platform_count']
+        fields = [
+            'id', 'name', 'slug', 'description', 'devicetype_count', 'inventoryitem_count', 'platform_count',
+        ]
 
 
 class DeviceTypeSerializer(TaggitSerializer, CustomFieldModelSerializer):
@@ -355,7 +357,7 @@ class PlatformSerializer(ValidatedModelSerializer):
     class Meta:
         model = Platform
         fields = [
-            'id', 'name', 'slug', 'manufacturer', 'napalm_driver', 'napalm_args', 'device_count',
+            'id', 'name', 'slug', 'manufacturer', 'napalm_driver', 'napalm_args', 'description', 'device_count',
             'virtualmachine_count',
         ]
 
@@ -392,8 +394,7 @@ class DeviceSerializer(TaggitSerializer, CustomFieldModelSerializer):
         # Validate uniqueness of (rack, position, face) since we omitted the automatically-created validator from Meta.
         if data.get('rack') and data.get('position') and data.get('face'):
             validator = UniqueTogetherValidator(queryset=Device.objects.all(), fields=('rack', 'position', 'face'))
-            validator.set_context(self)
-            validator(data)
+            validator(data, self)
 
         # Enforce model validation
         super().validate(data)
@@ -530,6 +531,7 @@ class InterfaceSerializer(TaggitSerializer, ConnectedEndpointSerializer):
     )
     cable = NestedCableSerializer(read_only=True)
     tags = TagListSerializerField(required=False)
+    count_ipaddresses = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Interface

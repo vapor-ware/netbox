@@ -1,6 +1,6 @@
 from dcim.models import RackRole
 from ruamel.yaml import YAML
-from utilities.forms import COLOR_CHOICES
+from utilities.choices import ColorChoices
 
 from pathlib import Path
 import sys
@@ -18,7 +18,7 @@ with file.open('r') as stream:
       if 'color' in params:
         color = params.pop('color')
 
-        for color_tpl in COLOR_CHOICES:
+        for color_tpl in ColorChoices:
           if color in color_tpl:
             params['color'] = color_tpl[0]
 

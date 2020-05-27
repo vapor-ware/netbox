@@ -63,11 +63,13 @@ class RackWidthChoices(ChoiceSet):
 
     WIDTH_10IN = 10
     WIDTH_19IN = 19
+    WIDTH_21IN = 21
     WIDTH_23IN = 23
 
     CHOICES = (
         (WIDTH_10IN, '10 inches'),
         (WIDTH_19IN, '19 inches'),
+        (WIDTH_21IN, '21 inches'),
         (WIDTH_23IN, '23 inches'),
     )
 
@@ -280,6 +282,10 @@ class PowerPortTypeChoices(ChoiceSet):
     TYPE_NEMA_L620P = 'nema-l6-20p'
     TYPE_NEMA_L630P = 'nema-l6-30p'
     TYPE_NEMA_L650P = 'nema-l6-50p'
+    TYPE_NEMA_L1420P = 'nema-l14-20p'
+    TYPE_NEMA_L1430P = 'nema-l14-30p'
+    TYPE_NEMA_L2120P = 'nema-l21-20p'
+    TYPE_NEMA_L2130P = 'nema-l21-30p'
     # California style
     TYPE_CS6361C = 'cs6361c'
     TYPE_CS6365C = 'cs6365c'
@@ -341,6 +347,10 @@ class PowerPortTypeChoices(ChoiceSet):
             (TYPE_NEMA_L620P, 'NEMA L6-20P'),
             (TYPE_NEMA_L630P, 'NEMA L6-30P'),
             (TYPE_NEMA_L650P, 'NEMA L6-50P'),
+            (TYPE_NEMA_L1420P, 'NEMA L14-20P'),
+            (TYPE_NEMA_L1430P, 'NEMA L14-30P'),
+            (TYPE_NEMA_L2120P, 'NEMA L21-20P'),
+            (TYPE_NEMA_L2130P, 'NEMA L21-30P'),
         )),
         ('California Style', (
             (TYPE_CS6361C, 'CS6361C'),
@@ -409,6 +419,10 @@ class PowerOutletTypeChoices(ChoiceSet):
     TYPE_NEMA_L620R = 'nema-l6-20r'
     TYPE_NEMA_L630R = 'nema-l6-30r'
     TYPE_NEMA_L650R = 'nema-l6-50r'
+    TYPE_NEMA_L1420R = 'nema-l14-20r'
+    TYPE_NEMA_L1430R = 'nema-l14-30r'
+    TYPE_NEMA_L2120R = 'nema-l21-20r'
+    TYPE_NEMA_L2130R = 'nema-l21-30r'
     # California style
     TYPE_CS6360C = 'CS6360C'
     TYPE_CS6364C = 'CS6364C'
@@ -428,6 +442,8 @@ class PowerOutletTypeChoices(ChoiceSet):
     TYPE_ITA_M = 'ita-m'
     TYPE_ITA_N = 'ita-n'
     TYPE_ITA_O = 'ita-o'
+    # Proprietary
+    TYPE_HDOT_CX = 'hdot-cx'
 
     CHOICES = (
         ('IEC 60320', (
@@ -469,6 +485,10 @@ class PowerOutletTypeChoices(ChoiceSet):
             (TYPE_NEMA_L620R, 'NEMA L6-20R'),
             (TYPE_NEMA_L630R, 'NEMA L6-30R'),
             (TYPE_NEMA_L650R, 'NEMA L6-50R'),
+            (TYPE_NEMA_L1420R, 'NEMA L14-20R'),
+            (TYPE_NEMA_L1430R, 'NEMA L14-30R'),
+            (TYPE_NEMA_L2120R, 'NEMA L21-20R'),
+            (TYPE_NEMA_L2130R, 'NEMA L21-30R'),
         )),
         ('California Style', (
             (TYPE_CS6360C, 'CS6360C'),
@@ -490,6 +510,9 @@ class PowerOutletTypeChoices(ChoiceSet):
             (TYPE_ITA_M, 'ITA Type M (BS 546)'),
             (TYPE_ITA_N, 'ITA Type N'),
             (TYPE_ITA_O, 'ITA Type O'),
+        )),
+        ('Proprietary', (
+            (TYPE_HDOT_CX, 'HDOT Cx'),
         )),
     )
 
@@ -581,15 +604,15 @@ class InterfaceTypeChoices(ChoiceSet):
     TYPE_128GFC_QSFP28 = '128gfc-sfp28'
 
     # InfiniBand
-    TYPE_INFINIBAND_SDR = 'inifiband-sdr'
-    TYPE_INFINIBAND_DDR = 'inifiband-ddr'
-    TYPE_INFINIBAND_QDR = 'inifiband-qdr'
-    TYPE_INFINIBAND_FDR10 = 'inifiband-fdr10'
-    TYPE_INFINIBAND_FDR = 'inifiband-fdr'
-    TYPE_INFINIBAND_EDR = 'inifiband-edr'
-    TYPE_INFINIBAND_HDR = 'inifiband-hdr'
-    TYPE_INFINIBAND_NDR = 'inifiband-ndr'
-    TYPE_INFINIBAND_XDR = 'inifiband-xdr'
+    TYPE_INFINIBAND_SDR = 'infiniband-sdr'
+    TYPE_INFINIBAND_DDR = 'infiniband-ddr'
+    TYPE_INFINIBAND_QDR = 'infiniband-qdr'
+    TYPE_INFINIBAND_FDR10 = 'infiniband-fdr10'
+    TYPE_INFINIBAND_FDR = 'infiniband-fdr'
+    TYPE_INFINIBAND_EDR = 'infiniband-edr'
+    TYPE_INFINIBAND_HDR = 'infiniband-hdr'
+    TYPE_INFINIBAND_NDR = 'infiniband-ndr'
+    TYPE_INFINIBAND_XDR = 'infiniband-xdr'
 
     # Serial
     TYPE_T1 = 't1'

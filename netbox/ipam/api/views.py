@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django_pglocks import advisory_lock
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
@@ -10,24 +11,10 @@ from rest_framework.response import Response
 from extras.api.views import CustomFieldModelViewSet
 from ipam import filters
 from ipam.models import Aggregate, IPAddress, Prefix, RIR, Role, Service, VLAN, VLANGroup, VRF
-from utilities.api import FieldChoicesViewSet, ModelViewSet
+from utilities.api import ModelViewSet
 from utilities.constants import ADVISORY_LOCK_KEYS
 from utilities.utils import get_subquery
 from . import serializers
-
-
-#
-# Field choices
-#
-
-class IPAMFieldChoicesViewSet(FieldChoicesViewSet):
-    fields = (
-        (serializers.AggregateSerializer, ['family']),
-        (serializers.PrefixSerializer, ['family', 'status']),
-        (serializers.IPAddressSerializer, ['family', 'status', 'role']),
-        (serializers.VLANSerializer, ['status']),
-        (serializers.ServiceSerializer, ['protocol']),
-    )
 
 
 #
@@ -87,6 +74,12 @@ class PrefixViewSet(CustomFieldModelViewSet):
     serializer_class = serializers.PrefixSerializer
     filterset_class = filters.PrefixFilterSet
 
+    @swagger_auto_schema(
+        methods=['get', 'post'],
+        responses={
+            200: serializers.AvailablePrefixSerializer(many=True),
+        }
+    )
     @action(detail=True, url_path='available-prefixes', methods=['get', 'post'])
     @advisory_lock(ADVISORY_LOCK_KEYS['available-prefixes'])
     def available_prefixes(self, request, pk=None):
@@ -105,44 +98,24 @@ class PrefixViewSet(CustomFieldModelViewSet):
             if not request.user.has_perm('ipam.add_prefix'):
                 raise PermissionDenied()
 
-            # Normalize to a list of objects
-            requested_prefixes = request.data if isinstance(request.data, list) else [request.data]
+            # Validate Requested Prefixes' length
+            serializer = serializers.PrefixLengthSerializer(
+                data=request.data if isinstance(request.data, list) else [request.data],
+                many=True,
+                context={
+                    'request': request,
+                    'prefix': prefix,
+                }
+            )
+            if not serializer.is_valid():
+                return Response(
+                    serializer.errors,
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
+            requested_prefixes = serializer.validated_data
             # Allocate prefixes to the requested objects based on availability within the parent
             for i, requested_prefix in enumerate(requested_prefixes):
-
-                # Validate requested prefix size
-                prefix_length = requested_prefix.get('prefix_length')
-                if prefix_length is None:
-                    return Response(
-                        {
-                            "detail": "Item {}: prefix_length field missing".format(i)
-                        },
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                try:
-                    prefix_length = int(prefix_length)
-                except ValueError:
-                    return Response(
-                        {
-                            "detail": "Item {}: Invalid prefix length ({})".format(i, prefix_length),
-                        },
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                if prefix.family == 4 and prefix_length > 32:
-                    return Response(
-                        {
-                            "detail": "Item {}: Invalid prefix length ({}) for IPv4".format(i, prefix_length),
-                        },
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                elif prefix.family == 6 and prefix_length > 128:
-                    return Response(
-                        {
-                            "detail": "Item {}: Invalid prefix length ({}) for IPv6".format(i, prefix_length),
-                        },
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
 
                 # Find the first available prefix equal to or larger than the requested size
                 for available_prefix in available_prefixes.iter_cidrs():
@@ -185,6 +158,12 @@ class PrefixViewSet(CustomFieldModelViewSet):
 
             return Response(serializer.data)
 
+    @swagger_auto_schema(
+        methods=['get', 'post'],
+        responses={
+            200: serializers.AvailableIPSerializer(many=True),
+        }
+    )
     @action(detail=True, url_path='available-ips', methods=['get', 'post'])
     @advisory_lock(ADVISORY_LOCK_KEYS['available-ips'])
     def available_ips(self, request, pk=None):

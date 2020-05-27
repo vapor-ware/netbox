@@ -1,18 +1,22 @@
+import importlib
 import logging
 import os
 import platform
+import re
 import socket
 import warnings
+from urllib.parse import urlsplit
 
 from django.contrib.messages import constants as messages
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.validators import URLValidator
 
 
 #
 # Environment setup
 #
 
-VERSION = '2.7.10'
+VERSION = '2.8.5'
 
 # Hostname
 HOSTNAME = platform.node()
@@ -21,15 +25,9 @@ HOSTNAME = platform.node()
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Validate Python version
-if platform.python_version_tuple() < ('3', '5'):
+if platform.python_version_tuple() < ('3', '6'):
     raise RuntimeError(
-        "NetBox requires Python 3.5 or higher (current: Python {})".format(platform.python_version())
-    )
-elif platform.python_version_tuple() < ('3', '6'):
-    warnings.warn(
-        "Python 3.6 or higher will be required starting with NetBox v2.8 (current: Python {})".format(
-            platform.python_version()
-        )
+        "NetBox requires Python 3.6 or higher (current: Python {})".format(platform.python_version())
     )
 
 
@@ -79,6 +77,8 @@ DOCS_ROOT = getattr(configuration, 'DOCS_ROOT', os.path.join(os.path.dirname(BAS
 EMAIL = getattr(configuration, 'EMAIL', {})
 ENFORCE_GLOBAL_UNIQUE = getattr(configuration, 'ENFORCE_GLOBAL_UNIQUE', False)
 EXEMPT_VIEW_PERMISSIONS = getattr(configuration, 'EXEMPT_VIEW_PERMISSIONS', [])
+HTTP_PROXIES = getattr(configuration, 'HTTP_PROXIES', None)
+INTERNAL_IPS = getattr(configuration, 'INTERNAL_IPS', ('127.0.0.1', '::1'))
 LOGGING = getattr(configuration, 'LOGGING', {})
 LOGIN_REQUIRED = getattr(configuration, 'LOGIN_REQUIRED', False)
 LOGIN_TIMEOUT = getattr(configuration, 'LOGIN_TIMEOUT', None)
@@ -93,7 +93,17 @@ NAPALM_PASSWORD = getattr(configuration, 'NAPALM_PASSWORD', '')
 NAPALM_TIMEOUT = getattr(configuration, 'NAPALM_TIMEOUT', 30)
 NAPALM_USERNAME = getattr(configuration, 'NAPALM_USERNAME', '')
 PAGINATE_COUNT = getattr(configuration, 'PAGINATE_COUNT', 50)
+PLUGINS = getattr(configuration, 'PLUGINS', [])
+PLUGINS_CONFIG = getattr(configuration, 'PLUGINS_CONFIG', {})
 PREFER_IPV4 = getattr(configuration, 'PREFER_IPV4', False)
+REMOTE_AUTH_AUTO_CREATE_USER = getattr(configuration, 'REMOTE_AUTH_AUTO_CREATE_USER', False)
+REMOTE_AUTH_BACKEND = getattr(configuration, 'REMOTE_AUTH_BACKEND', 'utilities.auth_backends.RemoteUserBackend')
+REMOTE_AUTH_DEFAULT_GROUPS = getattr(configuration, 'REMOTE_AUTH_DEFAULT_GROUPS', [])
+REMOTE_AUTH_DEFAULT_PERMISSIONS = getattr(configuration, 'REMOTE_AUTH_DEFAULT_PERMISSIONS', [])
+REMOTE_AUTH_ENABLED = getattr(configuration, 'REMOTE_AUTH_ENABLED', False)
+REMOTE_AUTH_HEADER = getattr(configuration, 'REMOTE_AUTH_HEADER', 'HTTP_REMOTE_USER')
+RELEASE_CHECK_URL = getattr(configuration, 'RELEASE_CHECK_URL', None)
+RELEASE_CHECK_TIMEOUT = getattr(configuration, 'RELEASE_CHECK_TIMEOUT', 24 * 3600)
 REPORTS_ROOT = getattr(configuration, 'REPORTS_ROOT', os.path.join(BASE_DIR, 'reports')).rstrip('/')
 SCRIPTS_ROOT = getattr(configuration, 'SCRIPTS_ROOT', os.path.join(BASE_DIR, 'scripts')).rstrip('/')
 SESSION_FILE_PATH = getattr(configuration, 'SESSION_FILE_PATH', None)
@@ -102,6 +112,20 @@ SHORT_DATETIME_FORMAT = getattr(configuration, 'SHORT_DATETIME_FORMAT', 'Y-m-d H
 SHORT_TIME_FORMAT = getattr(configuration, 'SHORT_TIME_FORMAT', 'H:i:s')
 TIME_FORMAT = getattr(configuration, 'TIME_FORMAT', 'g:i a')
 TIME_ZONE = getattr(configuration, 'TIME_ZONE', 'UTC')
+
+# Validate update repo URL and timeout
+if RELEASE_CHECK_URL:
+    try:
+        URLValidator(RELEASE_CHECK_URL)
+    except ValidationError:
+        raise ImproperlyConfigured(
+            "RELEASE_CHECK_URL must be a valid API URL. Example: "
+            "https://api.github.com/repos/netbox-community/netbox"
+        )
+
+# Enforce a minimum cache timeout for update checks
+if RELEASE_CHECK_TIMEOUT < 3600:
+    raise ImproperlyConfigured("RELEASE_CHECK_TIMEOUT has to be at least 3600 seconds (1 hour)")
 
 
 #
@@ -159,31 +183,40 @@ if STORAGE_CONFIG and STORAGE_BACKEND is None:
 # Redis
 #
 
-if 'webhooks' not in REDIS:
-    raise ImproperlyConfigured(
-        "REDIS section in configuration.py is missing webhooks subsection."
+# Background task queuing
+if 'tasks' in REDIS:
+    TASKS_REDIS = REDIS['tasks']
+elif 'webhooks' in REDIS:
+    # TODO: Remove support for 'webhooks' name in v2.9
+    warnings.warn(
+        "The 'webhooks' REDIS configuration section has been renamed to 'tasks'. Please update your configuration as "
+        "support for the old name will be removed in a future release."
     )
-if 'caching' not in REDIS:
+    TASKS_REDIS = REDIS['webhooks']
+else:
+    raise ImproperlyConfigured(
+        "REDIS section in configuration.py is missing the 'tasks' subsection."
+    )
+TASKS_REDIS_HOST = TASKS_REDIS.get('HOST', 'localhost')
+TASKS_REDIS_PORT = TASKS_REDIS.get('PORT', 6379)
+TASKS_REDIS_SENTINELS = TASKS_REDIS.get('SENTINELS', [])
+TASKS_REDIS_USING_SENTINEL = all([
+    isinstance(TASKS_REDIS_SENTINELS, (list, tuple)),
+    len(TASKS_REDIS_SENTINELS) > 0
+])
+TASKS_REDIS_SENTINEL_SERVICE = TASKS_REDIS.get('SENTINEL_SERVICE', 'default')
+TASKS_REDIS_PASSWORD = TASKS_REDIS.get('PASSWORD', '')
+TASKS_REDIS_DATABASE = TASKS_REDIS.get('DATABASE', 0)
+TASKS_REDIS_DEFAULT_TIMEOUT = TASKS_REDIS.get('DEFAULT_TIMEOUT', 300)
+TASKS_REDIS_SSL = TASKS_REDIS.get('SSL', False)
+
+# Caching
+if 'caching' in REDIS:
+    CACHING_REDIS = REDIS['caching']
+else:
     raise ImproperlyConfigured(
         "REDIS section in configuration.py is missing caching subsection."
     )
-
-WEBHOOKS_REDIS = REDIS.get('webhooks', {})
-WEBHOOKS_REDIS_HOST = WEBHOOKS_REDIS.get('HOST', 'localhost')
-WEBHOOKS_REDIS_PORT = WEBHOOKS_REDIS.get('PORT', 6379)
-WEBHOOKS_REDIS_SENTINELS = WEBHOOKS_REDIS.get('SENTINELS', [])
-WEBHOOKS_REDIS_USING_SENTINEL = all([
-    isinstance(WEBHOOKS_REDIS_SENTINELS, (list, tuple)),
-    len(WEBHOOKS_REDIS_SENTINELS) > 0
-])
-WEBHOOKS_REDIS_SENTINEL_SERVICE = WEBHOOKS_REDIS.get('SENTINEL_SERVICE', 'default')
-WEBHOOKS_REDIS_PASSWORD = WEBHOOKS_REDIS.get('PASSWORD', '')
-WEBHOOKS_REDIS_DATABASE = WEBHOOKS_REDIS.get('DATABASE', 0)
-WEBHOOKS_REDIS_DEFAULT_TIMEOUT = WEBHOOKS_REDIS.get('DEFAULT_TIMEOUT', 300)
-WEBHOOKS_REDIS_SSL = WEBHOOKS_REDIS.get('SSL', False)
-
-
-CACHING_REDIS = REDIS.get('caching', {})
 CACHING_REDIS_HOST = CACHING_REDIS.get('HOST', 'localhost')
 CACHING_REDIS_PORT = CACHING_REDIS.get('PORT', 6379)
 CACHING_REDIS_SENTINELS = CACHING_REDIS.get('SENTINELS', [])
@@ -214,12 +247,16 @@ if SESSION_FILE_PATH is not None:
 #
 
 EMAIL_HOST = EMAIL.get('SERVER')
-EMAIL_PORT = EMAIL.get('PORT', 25)
 EMAIL_HOST_USER = EMAIL.get('USERNAME')
 EMAIL_HOST_PASSWORD = EMAIL.get('PASSWORD')
+EMAIL_PORT = EMAIL.get('PORT', 25)
+EMAIL_SSL_CERTFILE = EMAIL.get('SSL_CERTFILE')
+EMAIL_SSL_KEYFILE = EMAIL.get('SSL_KEYFILE')
+EMAIL_SUBJECT_PREFIX = '[NetBox] '
+EMAIL_USE_SSL = EMAIL.get('USE_SSL', False)
+EMAIL_USE_TLS = EMAIL.get('USE_TLS', False)
 EMAIL_TIMEOUT = EMAIL.get('TIMEOUT', 10)
 SERVER_EMAIL = EMAIL.get('FROM_EMAIL')
-EMAIL_SUBJECT_PREFIX = '[NetBox] '
 
 
 #
@@ -243,7 +280,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'debug_toolbar',
     'django_filters',
-    'django_rq',
     'django_tables2',
     'django_prometheus',
     'mptt',
@@ -260,12 +296,13 @@ INSTALLED_APPS = [
     'users',
     'utilities',
     'virtualization',
+    'django_rq',  # Must come after extras to allow overriding management commands
     'drf_yasg',
     'vapor',
 ]
 
 # Middleware
-MIDDLEWARE = (
+MIDDLEWARE = [
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -277,11 +314,12 @@ MIDDLEWARE = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'utilities.middleware.ExceptionHandlingMiddleware',
+    'utilities.middleware.RemoteUserMiddleware',
     'utilities.middleware.LoginRequiredMiddleware',
     'utilities.middleware.APIVersionMiddleware',
     'extras.middleware.ObjectChangeMiddleware',
     'django_prometheus.middleware.PrometheusAfterMiddleware',
-)
+]
 
 ROOT_URLCONF = 'netbox.urls'
 
@@ -298,14 +336,15 @@ TEMPLATES = [
                 'django.template.context_processors.media',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'utilities.context_processors.settings',
+                'utilities.context_processors.settings_and_registry',
             ],
         },
     },
 ]
 
-# Authentication
+# Set up authentication backends
 AUTHENTICATION_BACKENDS = [
+    REMOTE_AUTH_BACKEND,
     'utilities.auth_backends.ViewExemptModelBackend',
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
@@ -320,6 +359,7 @@ USE_TZ = True
 WSGI_APPLICATION = 'netbox.wsgi.application'
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 # Static files (CSS, JavaScript, Images)
 STATIC_ROOT = BASE_DIR + '/static'
@@ -453,11 +493,14 @@ CACHEOPS = {
     'auth.*': {'ops': ('fetch', 'get')},
     'auth.permission': {'ops': 'all'},
     'circuits.*': {'ops': 'all'},
+    'dcim.region': None,  # MPTT models are exempt due to raw sql
+    'dcim.rackgroup': None,  # MPTT models are exempt due to raw sql
     'dcim.*': {'ops': 'all'},
     'ipam.*': {'ops': 'all'},
     'extras.*': {'ops': 'all'},
     'secrets.*': {'ops': 'all'},
     'users.*': {'ops': 'all'},
+    'tenancy.tenantgroup': None,  # MPTT models are exempt due to raw sql
     'tenancy.*': {'ops': 'all'},
     'virtualization.*': {'ops': 'all'},
 }
@@ -544,7 +587,6 @@ SWAGGER_SETTINGS = {
         'drf_yasg.inspectors.StringDefaultFieldInspector',
     ],
     'DEFAULT_FILTER_INSPECTORS': [
-        'utilities.custom_inspectors.IdInFilterInspector',
         'drf_yasg.inspectors.CoreAPICompatInspector',
     ],
     'DEFAULT_INFO': 'netbox.urls.openapi_info',
@@ -569,35 +611,31 @@ SWAGGER_SETTINGS = {
 # Django RQ (Webhooks backend)
 #
 
-RQ_QUEUES = {
-    'default': {
-        'HOST': WEBHOOKS_REDIS_HOST,
-        'PORT': WEBHOOKS_REDIS_PORT,
-        'DB': WEBHOOKS_REDIS_DATABASE,
-        'PASSWORD': WEBHOOKS_REDIS_PASSWORD,
-        'DEFAULT_TIMEOUT': WEBHOOKS_REDIS_DEFAULT_TIMEOUT,
-        'SSL': WEBHOOKS_REDIS_SSL,
-    } if not WEBHOOKS_REDIS_USING_SENTINEL else {
-        'SENTINELS': WEBHOOKS_REDIS_SENTINELS,
-        'MASTER_NAME': WEBHOOKS_REDIS_SENTINEL_SERVICE,
-        'DB': WEBHOOKS_REDIS_DATABASE,
-        'PASSWORD': WEBHOOKS_REDIS_PASSWORD,
+if TASKS_REDIS_USING_SENTINEL:
+    RQ_PARAMS = {
+        'SENTINELS': TASKS_REDIS_SENTINELS,
+        'MASTER_NAME': TASKS_REDIS_SENTINEL_SERVICE,
+        'DB': TASKS_REDIS_DATABASE,
+        'PASSWORD': TASKS_REDIS_PASSWORD,
         'SOCKET_TIMEOUT': None,
         'CONNECTION_KWARGS': {
-            'socket_connect_timeout': WEBHOOKS_REDIS_DEFAULT_TIMEOUT
+            'socket_connect_timeout': TASKS_REDIS_DEFAULT_TIMEOUT
         },
     }
+else:
+    RQ_PARAMS = {
+        'HOST': TASKS_REDIS_HOST,
+        'PORT': TASKS_REDIS_PORT,
+        'DB': TASKS_REDIS_DATABASE,
+        'PASSWORD': TASKS_REDIS_PASSWORD,
+        'DEFAULT_TIMEOUT': TASKS_REDIS_DEFAULT_TIMEOUT,
+        'SSL': TASKS_REDIS_SSL,
+    }
+
+RQ_QUEUES = {
+    'default': RQ_PARAMS,  # Webhooks
+    'check_releases': RQ_PARAMS,
 }
-
-
-#
-# Django debug toolbar
-#
-
-INTERNAL_IPS = (
-    '127.0.0.1',
-    '::1',
-)
 
 
 #
@@ -614,3 +652,48 @@ PER_PAGE_DEFAULTS = [
 if PAGINATE_COUNT not in PER_PAGE_DEFAULTS:
     PER_PAGE_DEFAULTS.append(PAGINATE_COUNT)
     PER_PAGE_DEFAULTS = sorted(PER_PAGE_DEFAULTS)
+
+
+#
+# Plugins
+#
+
+for plugin_name in PLUGINS:
+
+    # Import plugin module
+    try:
+        plugin = importlib.import_module(plugin_name)
+    except ImportError:
+        raise ImproperlyConfigured(
+            "Unable to import plugin {}: Module not found. Check that the plugin module has been installed within the "
+            "correct Python environment.".format(plugin_name)
+        )
+
+    # Determine plugin config and add to INSTALLED_APPS.
+    try:
+        plugin_config = plugin.config
+        INSTALLED_APPS.append("{}.{}".format(plugin_config.__module__, plugin_config.__name__))
+    except AttributeError:
+        raise ImproperlyConfigured(
+            "Plugin {} does not provide a 'config' variable. This should be defined in the plugin's __init__.py file "
+            "and point to the PluginConfig subclass.".format(plugin_name)
+        )
+
+    # Validate user-provided configuration settings and assign defaults
+    if plugin_name not in PLUGINS_CONFIG:
+        PLUGINS_CONFIG[plugin_name] = {}
+    plugin_config.validate(PLUGINS_CONFIG[plugin_name])
+
+    # Add middleware
+    plugin_middleware = plugin_config.middleware
+    if plugin_middleware and type(plugin_middleware) in (list, tuple):
+        MIDDLEWARE.extend(plugin_middleware)
+
+    # Apply cacheops config
+    if type(plugin_config.caching_config) is not dict:
+        raise ImproperlyConfigured(
+            "Plugin {} caching_config must be a dictionary.".format(plugin_name)
+        )
+    CACHEOPS.update({
+        "{}.{}".format(plugin_name, key): value for key, value in plugin_config.caching_config.items()
+    })

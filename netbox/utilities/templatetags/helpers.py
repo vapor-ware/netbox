@@ -40,7 +40,7 @@ def render_markdown(value):
     value = strip_tags(value)
 
     # Render Markdown
-    html = markdown(value, extensions=['fenced_code'])
+    html = markdown(value, extensions=['fenced_code', 'tables'])
 
     return mark_safe(html)
 
@@ -117,28 +117,6 @@ def humanize_speed(speed):
 
 
 @register.filter()
-def example_choices(field, arg=3):
-    """
-    Returns a number (default: 3) of example choices for a ChoiceFiled (useful for CSV import forms).
-    """
-    examples = []
-    if hasattr(field, 'queryset'):
-        choices = [
-            (obj.pk, getattr(obj, field.to_field_name)) for obj in field.queryset[:arg + 1]
-        ]
-    else:
-        choices = field.choices
-    for value, label in unpack_grouped_choices(choices):
-        if len(examples) == arg:
-            examples.append('etc.')
-            break
-        if not value or not label:
-            continue
-        examples.append(label)
-    return ', '.join(examples) or 'None'
-
-
-@register.filter()
 def tzoffset(value):
     """
     Returns the hour offset of a given time zone using the current time.
@@ -196,9 +174,17 @@ def get_docs(model):
         return "Unable to load documentation, error reading file: {}".format(path)
 
     # Render Markdown with the admonition extension
-    content = markdown(content, extensions=['admonition', 'fenced_code'])
+    content = markdown(content, extensions=['admonition', 'fenced_code', 'tables'])
 
     return mark_safe(content)
+
+
+@register.filter()
+def has_perms(user, permissions_list):
+    """
+    Return True if the user has *all* permissions in the list.
+    """
+    return user.has_perms(permissions_list)
 
 
 #

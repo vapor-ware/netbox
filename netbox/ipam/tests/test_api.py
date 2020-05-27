@@ -7,7 +7,7 @@ from rest_framework import status
 from dcim.models import Device, DeviceRole, DeviceType, Manufacturer, Site
 from ipam.choices import *
 from ipam.models import Aggregate, IPAddress, Prefix, RIR, Role, Service, VLAN, VLANGroup, VRF
-from utilities.testing import APITestCase, choices_to_dict, disable_warnings
+from utilities.testing import APITestCase, disable_warnings
 
 
 class AppTest(APITestCase):
@@ -18,31 +18,6 @@ class AppTest(APITestCase):
         response = self.client.get('{}?format=api'.format(url), **self.header)
 
         self.assertEqual(response.status_code, 200)
-
-    def test_choices(self):
-
-        url = reverse('ipam-api:field-choice-list')
-        response = self.client.get(url, **self.header)
-
-        self.assertEqual(response.status_code, 200)
-
-        # Aggregate
-        # self.assertEqual(choices_to_dict(response.data.get('aggregate:family')), )
-
-        # Prefix
-        # self.assertEqual(choices_to_dict(response.data.get('prefix:family')), )
-        self.assertEqual(choices_to_dict(response.data.get('prefix:status')), PrefixStatusChoices.as_dict())
-
-        # IPAddress
-        # self.assertEqual(choices_to_dict(response.data.get('ip-address:family')), )
-        self.assertEqual(choices_to_dict(response.data.get('ip-address:role')), IPAddressRoleChoices.as_dict())
-        self.assertEqual(choices_to_dict(response.data.get('ip-address:status')), IPAddressStatusChoices.as_dict())
-
-        # VLAN
-        self.assertEqual(choices_to_dict(response.data.get('vlan:status')), VLANStatusChoices.as_dict())
-
-        # Service
-        self.assertEqual(choices_to_dict(response.data.get('service:protocol')), ServiceProtocolChoices.as_dict())
 
 
 class VRFTest(APITestCase):
@@ -611,9 +586,14 @@ class PrefixTest(APITestCase):
             self.assertEqual(response.data['description'], data['description'])
 
         # Try to create one more prefix
-        response = self.client.post(url, {'prefix_length': 30}, **self.header)
+        response = self.client.post(url, {'prefix_length': 30}, format='json', **self.header)
         self.assertHttpStatus(response, status.HTTP_204_NO_CONTENT)
         self.assertIn('detail', response.data)
+
+        # Try to create invalid prefix type
+        response = self.client.post(url, {'prefix_length': '30'}, format='json', **self.header)
+        self.assertHttpStatus(response, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('prefix_length', response.data[0])
 
     def test_create_multiple_available_prefixes(self):
 
@@ -805,6 +785,7 @@ class VLANGroupTest(APITestCase):
 
         super().setUp()
 
+        self.site1 = Site.objects.create(name='Test Site 1', slug='test-site-1')
         self.vlangroup1 = VLANGroup.objects.create(name='Test VLAN Group 1', slug='test-vlan-group-1')
         self.vlangroup2 = VLANGroup.objects.create(name='Test VLAN Group 2', slug='test-vlan-group-2')
         self.vlangroup3 = VLANGroup.objects.create(name='Test VLAN Group 3', slug='test-vlan-group-3')
@@ -838,6 +819,7 @@ class VLANGroupTest(APITestCase):
         data = {
             'name': 'Test VLAN Group 4',
             'slug': 'test-vlan-group-4',
+            'site': self.site1.pk,
         }
 
         url = reverse('ipam-api:vlangroup-list')
@@ -906,10 +888,10 @@ class VLANTest(APITestCase):
 
         super().setUp()
 
+        self.group1 = VLANGroup.objects.create(name='Test VLAN Group 1', slug='test-vlan-group-1')
         self.vlan1 = VLAN.objects.create(vid=1, name='Test VLAN 1')
         self.vlan2 = VLAN.objects.create(vid=2, name='Test VLAN 2')
         self.vlan3 = VLAN.objects.create(vid=3, name='Test VLAN 3')
-
         self.prefix1 = Prefix.objects.create(prefix=IPNetwork('192.168.1.0/24'))
 
     def test_get_vlan(self):
@@ -941,6 +923,7 @@ class VLANTest(APITestCase):
         data = {
             'vid': 4,
             'name': 'Test VLAN 4',
+            'group': self.group1.pk,
         }
 
         url = reverse('ipam-api:vlan-list')

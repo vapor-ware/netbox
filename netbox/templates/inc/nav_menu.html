@@ -462,6 +462,7 @@
                         <li{% if not perms.secrets.view_secret %} class="disabled"{% endif %}>
                             {% if perms.secrets.add_secret %}
                                 <div class="buttons pull-right">
+                                    <a href="{% url 'secrets:secret_add' %}" class="btn btn-xs btn-success" title="Add"><i class="fa fa-plus"></i></a>
                                     <a href="{% url 'secrets:secret_import' %}" class="btn btn-xs btn-info" title="Import"><i class="fa fa-download"></i></a>
                                 </div>
                             {% endif %}
@@ -503,6 +504,9 @@
                         </li>
                     </ul>
                 </li>
+                {% if registry.plugin_menu_items %}
+                    {% include 'inc/plugin_menu_items.html' %}
+                {% endif %}
             </ul>
             {% endif %}
             <ul class="nav navbar-nav navbar-right">

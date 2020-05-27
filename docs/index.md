@@ -49,13 +49,13 @@ NetBox is built on the [Django](https://djangoproject.com/) Python framework and
 | HTTP service       | nginx or Apache   |
 | WSGI service       | gunicorn or uWSGI |
 | Application        | Django/Python     |
-| Database           | PostgreSQL 9.4+   |
+| Database           | PostgreSQL 9.6+   |
 | Task queuing       | Redis/django-rq   |
 | Live device access | NAPALM            |
 
 ## Supported Python Versions
 
-NetBox supports Python 3.5, 3.6, and 3.7 environments currently. Python 3.5 is scheduled to be unsupported in NetBox v2.8.
+NetBox supports Python 3.6 and 3.7 environments currently. (Support for Python 3.5 was removed in NetBox v2.8.)
 
 ## Getting Started
 

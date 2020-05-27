@@ -46,13 +46,14 @@ class RegionTestCase(ViewTestCases.OrganizationalObjectViewTestCase):
             'name': 'Region X',
             'slug': 'region-x',
             'parent': regions[2].pk,
+            'description': 'A new region',
         }
 
         cls.csv_data = (
-            "name,slug",
-            "Region 4,region-4",
-            "Region 5,region-5",
-            "Region 6,region-6",
+            "name,slug,description",
+            "Region 4,region-4,Fourth region",
+            "Region 5,region-5,Fifth region",
+            "Region 6,region-6,Sixth region",
         )
 
 
@@ -122,23 +123,26 @@ class RackGroupTestCase(ViewTestCases.OrganizationalObjectViewTestCase):
         site = Site(name='Site 1', slug='site-1')
         site.save()
 
-        RackGroup.objects.bulk_create([
+        rack_groups = (
             RackGroup(name='Rack Group 1', slug='rack-group-1', site=site),
             RackGroup(name='Rack Group 2', slug='rack-group-2', site=site),
             RackGroup(name='Rack Group 3', slug='rack-group-3', site=site),
-        ])
+        )
+        for rackgroup in rack_groups:
+            rackgroup.save()
 
         cls.form_data = {
             'name': 'Rack Group X',
             'slug': 'rack-group-x',
             'site': site.pk,
+            'description': 'A new rack group',
         }
 
         cls.csv_data = (
-            "site,name,slug",
-            "Site 1,Rack Group 4,rack-group-4",
-            "Site 1,Rack Group 5,rack-group-5",
-            "Site 1,Rack Group 6,rack-group-6",
+            "site,name,slug,description",
+            "Site 1,Rack Group 4,rack-group-4,Fourth rack group",
+            "Site 1,Rack Group 5,rack-group-5,Fifth rack group",
+            "Site 1,Rack Group 6,rack-group-6,Sixth rack group",
         )
 
 
@@ -172,10 +176,6 @@ class RackRoleTestCase(ViewTestCases.OrganizationalObjectViewTestCase):
 class RackReservationTestCase(ViewTestCases.PrimaryObjectViewTestCase):
     model = RackReservation
 
-    # Disable inapplicable tests
-    test_get_object = None
-    test_create_object = None
-
     @classmethod
     def setUpTestData(cls):
 
@@ -184,7 +184,10 @@ class RackReservationTestCase(ViewTestCases.PrimaryObjectViewTestCase):
 
         site = Site.objects.create(name='Site 1', slug='site-1')
 
-        rack = Rack(name='Rack 1', site=site)
+        rack_group = RackGroup(name='Rack Group 1', slug='rack-group-1', site=site)
+        rack_group.save()
+
+        rack = Rack(name='Rack 1', site=site, group=rack_group)
         rack.save()
 
         RackReservation.objects.bulk_create([
@@ -202,10 +205,10 @@ class RackReservationTestCase(ViewTestCases.PrimaryObjectViewTestCase):
         }
 
         cls.csv_data = (
-            'site,rack_name,units,description',
-            'Site 1,Rack 1,"10,11,12",Reservation 1',
-            'Site 1,Rack 1,"13,14,15",Reservation 2',
-            'Site 1,Rack 1,"16,17,18",Reservation 3',
+            'site,rack_group,rack,units,description',
+            'Site 1,Rack Group 1,Rack 1,"10,11,12",Reservation 1',
+            'Site 1,Rack Group 1,Rack 1,"13,14,15",Reservation 2',
+            'Site 1,Rack Group 1,Rack 1,"16,17,18",Reservation 3',
         )
 
         cls.bulk_edit_data = {
@@ -231,7 +234,8 @@ class RackTestCase(ViewTestCases.PrimaryObjectViewTestCase):
             RackGroup(name='Rack Group 1', slug='rack-group-1', site=sites[0]),
             RackGroup(name='Rack Group 2', slug='rack-group-2', site=sites[1])
         )
-        RackGroup.objects.bulk_create(rackgroups)
+        for rackgroup in rackgroups:
+            rackgroup.save()
 
         rackroles = (
             RackRole(name='Rack Role 1', slug='rack-role-1'),
@@ -267,10 +271,10 @@ class RackTestCase(ViewTestCases.PrimaryObjectViewTestCase):
         }
 
         cls.csv_data = (
-            "site,name,width,u_height",
-            "Site 1,Rack 4,19,42",
-            "Site 1,Rack 5,19,42",
-            "Site 1,Rack 6,19,42",
+            "site,group,name,width,u_height",
+            "Site 1,,Rack 4,19,42",
+            "Site 1,Rack Group 1,Rack 5,19,42",
+            "Site 2,Rack Group 2,Rack 6,19,42",
         )
 
         cls.bulk_edit_data = {
@@ -306,13 +310,14 @@ class ManufacturerTestCase(ViewTestCases.OrganizationalObjectViewTestCase):
         cls.form_data = {
             'name': 'Manufacturer X',
             'slug': 'manufacturer-x',
+            'description': 'A new manufacturer',
         }
 
         cls.csv_data = (
-            "name,slug",
-            "Manufacturer 4,manufacturer-4",
-            "Manufacturer 5,manufacturer-5",
-            "Manufacturer 6,manufacturer-6",
+            "name,slug,description",
+            "Manufacturer 4,manufacturer-4,Fourth manufacturer",
+            "Manufacturer 5,manufacturer-5,Fifth manufacturer",
+            "Manufacturer 6,manufacturer-6,Sixth manufacturer",
         )
 
 
@@ -361,6 +366,7 @@ manufacturer: Generic
 model: TEST-1000
 slug: test-1000
 u_height: 2
+comments: test comment
 console-ports:
   - name: Console Port 1
     type: de-9
@@ -451,6 +457,7 @@ device-bays:
         self.assertHttpStatus(response, 200)
 
         dt = DeviceType.objects.get(model='TEST-1000')
+        self.assertEqual(dt.comments, 'test comment')
 
         # Verify all of the components were created
         self.assertEqual(dt.consoleport_templates.count(), 3)
@@ -865,13 +872,14 @@ class PlatformTestCase(ViewTestCases.OrganizationalObjectViewTestCase):
             'manufacturer': manufacturer.pk,
             'napalm_driver': 'junos',
             'napalm_args': None,
+            'description': 'A new platform',
         }
 
         cls.csv_data = (
-            "name,slug",
-            "Platform 4,platform-4",
-            "Platform 5,platform-5",
-            "Platform 6,platform-6",
+            "name,slug,description",
+            "Platform 4,platform-4,Fourth platform",
+            "Platform 5,platform-5,Fifth platform",
+            "Platform 6,platform-6,Sixth platform",
         )
 
 
@@ -887,8 +895,11 @@ class DeviceTestCase(ViewTestCases.PrimaryObjectViewTestCase):
         )
         Site.objects.bulk_create(sites)
 
+        rack_group = RackGroup(site=sites[0], name='Rack Group 1', slug='rack-group-1')
+        rack_group.save()
+
         racks = (
-            Rack(name='Rack 1', site=sites[0]),
+            Rack(name='Rack 1', site=sites[0], group=rack_group),
             Rack(name='Rack 2', site=sites[1]),
         )
         Rack.objects.bulk_create(racks)
@@ -944,10 +955,10 @@ class DeviceTestCase(ViewTestCases.PrimaryObjectViewTestCase):
         }
 
         cls.csv_data = (
-            "device_role,manufacturer,model_name,status,site,name",
-            "Device Role 1,Manufacturer 1,Device Type 1,Active,Site 1,Device 4",
-            "Device Role 1,Manufacturer 1,Device Type 1,Active,Site 1,Device 5",
-            "Device Role 1,Manufacturer 1,Device Type 1,Active,Site 1,Device 6",
+            "device_role,manufacturer,device_type,status,name,site,rack_group,rack,position,face",
+            "Device Role 1,Manufacturer 1,Device Type 1,Active,Device 4,Site 1,Rack Group 1,Rack 1,10,Front",
+            "Device Role 1,Manufacturer 1,Device Type 1,Active,Device 5,Site 1,Rack Group 1,Rack 1,20,Front",
+            "Device Role 1,Manufacturer 1,Device Type 1,Active,Device 6,Site 1,Rack Group 1,Rack 1,30,Front",
         )
 
         cls.bulk_edit_data = {
@@ -1333,35 +1344,35 @@ class RearPortTestCase(ViewTestCases.DeviceComponentViewTestCase):
 class DeviceBayTestCase(ViewTestCases.DeviceComponentViewTestCase):
     model = DeviceBay
 
-    # Disable inapplicable views
-    test_bulk_edit_objects = None
-
     @classmethod
     def setUpTestData(cls):
-        device1 = create_test_device('Device 1')
-        device2 = create_test_device('Device 2')
+        device = create_test_device('Device 1')
 
         # Update the DeviceType subdevice role to allow adding DeviceBays
         DeviceType.objects.update(subdevice_role=SubdeviceRoleChoices.ROLE_PARENT)
 
         DeviceBay.objects.bulk_create([
-            DeviceBay(device=device1, name='Device Bay 1'),
-            DeviceBay(device=device1, name='Device Bay 2'),
-            DeviceBay(device=device1, name='Device Bay 3'),
+            DeviceBay(device=device, name='Device Bay 1'),
+            DeviceBay(device=device, name='Device Bay 2'),
+            DeviceBay(device=device, name='Device Bay 3'),
         ])
 
         cls.form_data = {
-            'device': device2.pk,
+            'device': device.pk,
             'name': 'Device Bay X',
             'description': 'A device bay',
             'tags': 'Alpha,Bravo,Charlie',
         }
 
         cls.bulk_create_data = {
-            'device': device2.pk,
+            'device': device.pk,
             'name_pattern': 'Device Bay [4-6]',
             'description': 'A device bay',
             'tags': 'Alpha,Bravo,Charlie',
+        }
+
+        cls.bulk_edit_data = {
+            'description': 'New description',
         }
 
         cls.csv_data = (
@@ -1504,10 +1515,7 @@ class VirtualChassisTestCase(ViewTestCases.PrimaryObjectViewTestCase):
     model = VirtualChassis
 
     # Disable inapplicable tests
-    test_get_object = None
     test_import_objects = None
-    test_bulk_edit_objects = None
-    test_bulk_delete_objects = None
 
     # TODO: Requires special form handling
     test_create_object = None
@@ -1570,7 +1578,8 @@ class PowerPanelTestCase(ViewTestCases.PrimaryObjectViewTestCase):
             RackGroup(name='Rack Group 1', slug='rack-group-1', site=sites[0]),
             RackGroup(name='Rack Group 2', slug='rack-group-2', site=sites[1]),
         )
-        RackGroup.objects.bulk_create(rackgroups)
+        for rackgroup in rackgroups:
+            rackgroup.save()
 
         PowerPanel.objects.bulk_create((
             PowerPanel(site=sites[0], rack_group=rackgroups[0], name='Power Panel 1'),
@@ -1585,7 +1594,7 @@ class PowerPanelTestCase(ViewTestCases.PrimaryObjectViewTestCase):
         }
 
         cls.csv_data = (
-            "site,rack_group_name,name",
+            "site,rack_group,name",
             "Site 1,Rack Group 1,Power Panel 4",
             "Site 1,Rack Group 1,Power Panel 5",
             "Site 1,Rack Group 1,Power Panel 6",
@@ -1644,7 +1653,7 @@ class PowerFeedTestCase(ViewTestCases.PrimaryObjectViewTestCase):
         }
 
         cls.csv_data = (
-            "site,panel_name,name,voltage,amperage,max_utilization",
+            "site,power_panel,name,voltage,amperage,max_utilization",
             "Site 1,Power Panel 1,Power Feed 4,120,20,80",
             "Site 1,Power Panel 1,Power Feed 5,120,20,80",
             "Site 1,Power Panel 1,Power Feed 6,120,20,80",

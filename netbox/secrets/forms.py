@@ -1,15 +1,15 @@
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.PublicKey import RSA
 from django import forms
-from taggit.forms import TagField
 
 from dcim.models import Device
 from extras.forms import (
     AddRemoveTagsForm, CustomFieldBulkEditForm, CustomFieldFilterForm, CustomFieldModelForm, CustomFieldModelCSVForm,
+    TagField,
 )
 from utilities.forms import (
-    APISelect, APISelectMultiple, BootstrapMixin, DynamicModelChoiceField, DynamicModelMultipleChoiceField,
-    FlexibleModelChoiceField, SlugField, StaticSelect2Multiple, TagFilterField,
+    APISelectMultiple, BootstrapMixin, CSVModelChoiceField, CSVModelForm, DynamicModelChoiceField,
+    DynamicModelMultipleChoiceField, SlugField, StaticSelect2Multiple, TagFilterField,
 )
 from .constants import *
 from .models import Secret, SecretRole, UserKey
@@ -55,15 +55,12 @@ class SecretRoleForm(BootstrapMixin, forms.ModelForm):
         }
 
 
-class SecretRoleCSVForm(forms.ModelForm):
+class SecretRoleCSVForm(CSVModelForm):
     slug = SlugField()
 
     class Meta:
         model = SecretRole
         fields = SecretRole.csv_headers
-        help_texts = {
-            'name': 'Name of secret role',
-        }
 
 
 #
@@ -71,6 +68,9 @@ class SecretRoleCSVForm(forms.ModelForm):
 #
 
 class SecretForm(BootstrapMixin, CustomFieldModelForm):
+    device = DynamicModelChoiceField(
+        queryset=Device.objects.all()
+    )
     plaintext = forms.CharField(
         max_length=SECRET_PLAINTEXT_MAX_LENGTH,
         required=False,
@@ -88,10 +88,7 @@ class SecretForm(BootstrapMixin, CustomFieldModelForm):
         widget=forms.PasswordInput()
     )
     role = DynamicModelChoiceField(
-        queryset=SecretRole.objects.all(),
-        widget=APISelect(
-            api_url="/api/secrets/secret-roles/"
-        )
+        queryset=SecretRole.objects.all()
     )
     tags = TagField(
         required=False
@@ -100,7 +97,7 @@ class SecretForm(BootstrapMixin, CustomFieldModelForm):
     class Meta:
         model = Secret
         fields = [
-            'role', 'name', 'plaintext', 'plaintext2', 'tags',
+            'device', 'role', 'name', 'plaintext', 'plaintext2', 'tags',
         ]
 
     def __init__(self, *args, **kwargs):
@@ -120,21 +117,15 @@ class SecretForm(BootstrapMixin, CustomFieldModelForm):
 
 
 class SecretCSVForm(CustomFieldModelCSVForm):
-    device = FlexibleModelChoiceField(
+    device = CSVModelChoiceField(
         queryset=Device.objects.all(),
         to_field_name='name',
-        help_text='Device name or ID',
-        error_messages={
-            'invalid_choice': 'Device not found.',
-        }
+        help_text='Assigned device'
     )
-    role = forms.ModelChoiceField(
+    role = CSVModelChoiceField(
         queryset=SecretRole.objects.all(),
         to_field_name='name',
-        help_text='Name of assigned role',
-        error_messages={
-            'invalid_choice': 'Invalid secret role.',
-        }
+        help_text='Assigned role'
     )
     plaintext = forms.CharField(
         help_text='Plaintext secret data'
@@ -160,10 +151,7 @@ class SecretBulkEditForm(BootstrapMixin, AddRemoveTagsForm, CustomFieldBulkEditF
     )
     role = DynamicModelChoiceField(
         queryset=SecretRole.objects.all(),
-        required=False,
-        widget=APISelect(
-            api_url="/api/secrets/secret-roles/"
-        )
+        required=False
     )
     name = forms.CharField(
         max_length=100,
@@ -187,7 +175,6 @@ class SecretFilterForm(BootstrapMixin, CustomFieldFilterForm):
         to_field_name='slug',
         required=False,
         widget=APISelectMultiple(
-            api_url="/api/secrets/secret-roles/",
             value_field="slug",
         )
     )

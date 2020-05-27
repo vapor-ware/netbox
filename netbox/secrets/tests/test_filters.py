@@ -20,8 +20,7 @@ class SecretRoleTestCase(TestCase):
         SecretRole.objects.bulk_create(roles)
 
     def test_id(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id': [str(id) for id in id_list]}
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_name(self):
@@ -68,13 +67,12 @@ class SecretTestCase(TestCase):
         for s in secrets:
             s.save()
 
-    def test_name(self):
-        params = {'name': ['Secret 1', 'Secret 2']}
+    def test_id(self):
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
-    def test_id__in(self):
-        id_list = self.queryset.values_list('id', flat=True)[:2]
-        params = {'id__in': ','.join([str(id) for id in id_list])}
+    def test_name(self):
+        params = {'name': ['Secret 1', 'Secret 2']}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_role(self):

@@ -7,11 +7,12 @@ python:
 theme:
     name: readthedocs
     navigation_depth: 3
+extra_css:
+    - extra.css
 markdown_extensions:
     - admonition:
     - markdown_include.include:
         headingOffset: 1
-
 nav:
     - Introduction: 'index.md'
     - Installation:
@@ -53,6 +54,9 @@ nav:
         - Reports: 'additional-features/reports.md'
         - Tags: 'additional-features/tags.md'
         - Webhooks: 'additional-features/webhooks.md'
+    - Plugins:
+        - Using Plugins: 'plugins/index.md'
+        - Developing Plugins: 'plugins/development.md'
     - Administration:
         - Replicating NetBox: 'administration/replicating-netbox.md'
         - NetBox Shell: 'administration/netbox-shell.md'
@@ -67,9 +71,11 @@ nav:
         - Style Guide: 'development/style-guide.md'
         - Utility Views: 'development/utility-views.md'
         - Extending Models: 'development/extending-models.md'
+        - Application Registry: 'development/application-registry.md'
+        - User Preferences: 'development/user-preferences.md'
         - Release Checklist: 'development/release-checklist.md'
-        - Squashing Migrations: 'development/squashing-migrations.md'
     - Release Notes:
+        - Version 2.8: 'release-notes/version-2.8.md'
         - Version 2.7: 'release-notes/version-2.7.md'
         - Version 2.6: 'release-notes/version-2.6.md'
         - Version 2.5: 'release-notes/version-2.5.md'

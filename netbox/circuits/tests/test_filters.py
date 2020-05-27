@@ -54,6 +54,10 @@ class ProviderTestCase(TestCase):
             CircuitTermination(circuit=circuits[1], site=sites[0], term_side='A', port_speed=1000),
         ))
 
+    def test_id(self):
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
+
     def test_name(self):
         params = {'name': ['Provider 1', 'Provider 2']}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
@@ -69,11 +73,6 @@ class ProviderTestCase(TestCase):
     def test_account(self):
         params = {'account': ['1234', '2345']}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
-
-    def test_id__in(self):
-        id_list = self.queryset.values_list('id', flat=True)[:3]
-        params = {'id__in': ','.join([str(id) for id in id_list])}
-        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 3)
 
     def test_site(self):
         sites = Site.objects.all()[:2]
@@ -144,7 +143,8 @@ class CircuitTestCase(TestCase):
             TenantGroup(name='Tenant group 2', slug='tenant-group-2'),
             TenantGroup(name='Tenant group 3', slug='tenant-group-3'),
         )
-        TenantGroup.objects.bulk_create(tenant_groups)
+        for tenantgroup in tenant_groups:
+            tenantgroup.save()
 
         tenants = (
             Tenant(name='Tenant 1', slug='tenant-1', group=tenant_groups[0]),
@@ -182,6 +182,10 @@ class CircuitTestCase(TestCase):
         ))
         CircuitTermination.objects.bulk_create(circuit_terminations)
 
+    def test_id(self):
+        params = {'id': self.queryset.values_list('pk', flat=True)[:2]}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
+
     def test_cid(self):
         params = {'cid': ['Test Circuit 1', 'Test Circuit 2']}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
@@ -193,11 +197,6 @@ class CircuitTestCase(TestCase):
     def test_commit_rate(self):
         params = {'commit_rate': ['1000', '2000']}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
-
-    def test_id__in(self):
-        id_list = self.queryset.values_list('id', flat=True)[:3]
-        params = {'id__in': ','.join([str(id) for id in id_list])}
-        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 3)
 
     def test_provider(self):
         provider = Provider.objects.first()

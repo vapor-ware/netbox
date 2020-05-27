@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -8,11 +10,13 @@ from taggit.managers import TaggableManager
 
 from dcim.choices import *
 from dcim.constants import *
-from dcim.exceptions import LoopDetected
+from dcim.exceptions import CableTraceSplit
 from dcim.fields import MACAddressField
 from extras.models import ObjectChange, TaggedItem
+from extras.utils import extras_features
 from utilities.fields import NaturalOrderingField
 from utilities.ordering import naturalize_interface
+from utilities.query_functions import CollateAsChar
 from utilities.utils import serialize_object
 from virtualization.choices import VMInterfaceTypeChoices
 
@@ -33,7 +37,7 @@ __all__ = (
 
 class ComponentModel(models.Model):
     description = models.CharField(
-        max_length=100,
+        max_length=200,
         blank=True
     )
 
@@ -87,74 +91,102 @@ class CableTermination(models.Model):
     class Meta:
         abstract = True
 
-    def trace(self, position=1, follow_circuits=False, cable_history=None):
+    def trace(self):
         """
-        Return a list representing a complete cable path, with each individual segment represented as a three-tuple:
+        Return two items: the traceable portion of a cable path, and the termination points where it splits (if any).
+        This occurs when the trace is initiated from a midpoint along a path which traverses a RearPort. In cases where
+        the originating endpoint is unknown, it is not possible to know which corresponding FrontPort to follow.
+
+        The path is a list representing a complete cable path, with each individual segment represented as a
+        three-tuple:
+
             [
                 (termination A, cable, termination B),
                 (termination C, cable, termination D),
                 (termination E, cable, termination F)
             ]
         """
-        def get_peer_port(termination, position=1, follow_circuits=False):
+        endpoint = self
+        path = []
+        position_stack = []
+
+        def get_peer_port(termination):
             from circuits.models import CircuitTermination
 
             # Map a front port to its corresponding rear port
             if isinstance(termination, FrontPort):
-                return termination.rear_port, termination.rear_port_position
+                position_stack.append(termination.rear_port_position)
+                # Retrieve the corresponding RearPort from database to ensure we have an up-to-date instance
+                peer_port = RearPort.objects.get(pk=termination.rear_port.pk)
+                return peer_port
 
             # Map a rear port/position to its corresponding front port
             elif isinstance(termination, RearPort):
+
+                # Can't map to a FrontPort without a position if there are multiple options
+                if termination.positions > 1 and not position_stack:
+                    raise CableTraceSplit(termination)
+
+                # We can assume position 1 if the RearPort has only one position
+                position = position_stack.pop() if position_stack else 1
+
+                # Validate the position
                 if position not in range(1, termination.positions + 1):
                     raise Exception("Invalid position for {} ({} positions): {})".format(
                         termination, termination.positions, position
                     ))
+
                 try:
                     peer_port = FrontPort.objects.get(
                         rear_port=termination,
                         rear_port_position=position,
                     )
-                    return peer_port, 1
+                    return peer_port
                 except ObjectDoesNotExist:
-                    return None, None
+                    return None
 
             # Follow a circuit to its other termination
-            elif isinstance(termination, CircuitTermination) and follow_circuits:
+            elif isinstance(termination, CircuitTermination):
                 peer_termination = termination.get_peer_termination()
                 if peer_termination is None:
-                    return None, None
-                return peer_termination, position
+                    return None
+                return peer_termination
 
             # Termination is not a pass-through port
             else:
-                return None, None
+                return None
 
-        if not self.cable:
-            return [(self, None, None)]
+        logger = logging.getLogger('netbox.dcim.cable.trace')
+        logger.debug("Tracing cable from {} {}".format(self.parent, self))
 
-        # Record cable history to detect loops
-        if cable_history is None:
-            cable_history = []
-        elif self.cable in cable_history:
-            raise LoopDetected()
-        cable_history.append(self.cable)
+        while endpoint is not None:
 
-        far_end = self.cable.termination_b if self.cable.termination_a == self else self.cable.termination_a
-        path = [(self, self.cable, far_end)]
+            # No cable connected; nothing to trace
+            if not endpoint.cable:
+                path.append((endpoint, None, None))
+                logger.debug("No cable connected")
+                return path, None
 
-        peer_port, position = get_peer_port(far_end, position, follow_circuits)
-        if peer_port is None:
-            return path
+            # Check for loops
+            if endpoint.cable in [segment[1] for segment in path]:
+                logger.debug("Loop detected!")
+                return path, None
 
-        try:
-            next_segment = peer_port.trace(position, follow_circuits, cable_history)
-        except LoopDetected:
-            return path
+            # Record the current segment in the path
+            far_end = endpoint.get_cable_peer()
+            path.append((endpoint, endpoint.cable, far_end))
+            logger.debug("{}[{}] --- Cable {} ---> {}[{}]".format(
+                endpoint.parent, endpoint, endpoint.cable.pk, far_end.parent, far_end
+            ))
 
-        if next_segment is None:
-            return path + [(peer_port, None, None)]
+            # Get the peer port of the far end termination
+            try:
+                endpoint = get_peer_port(far_end)
+            except CableTraceSplit as e:
+                return path, e.termination.frontports.all()
 
-        return path + next_segment
+            if endpoint is None:
+                return path, None
 
     def get_cable_peer(self):
         if self.cable is None:
@@ -164,11 +196,29 @@ class CableTermination(models.Model):
         if self._cabled_as_b.exists():
             return self.cable.termination_a
 
+    def get_path_endpoints(self):
+        """
+        Return all endpoints of paths which traverse this object.
+        """
+        endpoints = []
+
+        # Get the far end of the last path segment
+        path, split_ends = self.trace()
+        endpoint = path[-1][2]
+        if split_ends is not None:
+            for termination in split_ends:
+                endpoints.extend(termination.get_path_endpoints())
+        elif endpoint is not None:
+            endpoints.append(endpoint)
+
+        return endpoints
+
 
 #
 # Console ports
 #
 
+@extras_features('export_templates', 'webhooks')
 class ConsolePort(CableTermination, ComponentModel):
     """
     A physical console port within a Device. ConsolePorts connect to ConsoleServerPorts.
@@ -189,7 +239,8 @@ class ConsolePort(CableTermination, ComponentModel):
     type = models.CharField(
         max_length=50,
         choices=ConsolePortTypeChoices,
-        blank=True
+        blank=True,
+        help_text='Physical port type'
     )
     connected_endpoint = models.OneToOneField(
         to='dcim.ConsoleServerPort',
@@ -229,6 +280,7 @@ class ConsolePort(CableTermination, ComponentModel):
 # Console server ports
 #
 
+@extras_features('webhooks')
 class ConsoleServerPort(CableTermination, ComponentModel):
     """
     A physical port within a Device (typically a designated console server) which provides access to ConsolePorts.
@@ -249,7 +301,8 @@ class ConsoleServerPort(CableTermination, ComponentModel):
     type = models.CharField(
         max_length=50,
         choices=ConsolePortTypeChoices,
-        blank=True
+        blank=True,
+        help_text='Physical port type'
     )
     connection_status = models.NullBooleanField(
         choices=CONNECTION_STATUS_CHOICES,
@@ -282,6 +335,7 @@ class ConsoleServerPort(CableTermination, ComponentModel):
 # Power ports
 #
 
+@extras_features('export_templates', 'webhooks')
 class PowerPort(CableTermination, ComponentModel):
     """
     A physical power supply (intake) port within a Device. PowerPorts connect to PowerOutlets.
@@ -302,7 +356,8 @@ class PowerPort(CableTermination, ComponentModel):
     type = models.CharField(
         max_length=50,
         choices=PowerPortTypeChoices,
-        blank=True
+        blank=True,
+        help_text='Physical port type'
     )
     maximum_draw = models.PositiveSmallIntegerField(
         blank=True,
@@ -443,6 +498,7 @@ class PowerPort(CableTermination, ComponentModel):
 # Power outlets
 #
 
+@extras_features('webhooks')
 class PowerOutlet(CableTermination, ComponentModel):
     """
     A physical power outlet (output) within a Device which provides power to a PowerPort.
@@ -463,7 +519,8 @@ class PowerOutlet(CableTermination, ComponentModel):
     type = models.CharField(
         max_length=50,
         choices=PowerOutletTypeChoices,
-        blank=True
+        blank=True,
+        help_text='Physical port type'
     )
     power_port = models.ForeignKey(
         to='dcim.PowerPort',
@@ -519,6 +576,7 @@ class PowerOutlet(CableTermination, ComponentModel):
 # Interfaces
 #
 
+@extras_features('graphs', 'export_templates', 'webhooks')
 class Interface(CableTermination, ComponentModel):
     """
     A network interface within a Device or VirtualMachine. A physical Interface can connect to exactly one other
@@ -599,7 +657,7 @@ class Interface(CableTermination, ComponentModel):
     mode = models.CharField(
         max_length=50,
         choices=InterfaceModeChoices,
-        blank=True,
+        blank=True
     )
     untagged_vlan = models.ForeignKey(
         to='ipam.VLAN',
@@ -624,7 +682,7 @@ class Interface(CableTermination, ComponentModel):
 
     class Meta:
         # TODO: ordering and unique_together should include virtual_machine
-        ordering = ('device', '_name')
+        ordering = ('device', CollateAsChar('_name'))
         unique_together = ('device', 'name')
 
     def __str__(self):
@@ -792,6 +850,7 @@ class Interface(CableTermination, ComponentModel):
 # Pass-through ports
 #
 
+@extras_features('webhooks')
 class FrontPort(CableTermination, ComponentModel):
     """
     A pass-through port on the front of a Device.
@@ -864,6 +923,7 @@ class FrontPort(CableTermination, ComponentModel):
             )
 
 
+@extras_features('webhooks')
 class RearPort(CableTermination, ComponentModel):
     """
     A pass-through port on the rear of a Device.
@@ -915,6 +975,7 @@ class RearPort(CableTermination, ComponentModel):
 # Device bays
 #
 
+@extras_features('webhooks')
 class DeviceBay(ComponentModel):
     """
     An empty space within a Device which can house a child device
@@ -989,6 +1050,7 @@ class DeviceBay(ComponentModel):
 # Inventory items
 #
 
+@extras_features('export_templates', 'webhooks')
 class InventoryItem(ComponentModel):
     """
     An InventoryItem represents a serialized piece of hardware within a Device, such as a line card or power supply.
@@ -1025,7 +1087,8 @@ class InventoryItem(ComponentModel):
     part_id = models.CharField(
         max_length=50,
         verbose_name='Part ID',
-        blank=True
+        blank=True,
+        help_text='Manufacturer-assigned part identifier'
     )
     serial = models.CharField(
         max_length=50,
@@ -1042,7 +1105,7 @@ class InventoryItem(ComponentModel):
     )
     discovered = models.BooleanField(
         default=False,
-        verbose_name='Discovered'
+        help_text='This item was automatically discovered'
     )
 
     tags = TaggableManager(through=TaggedItem)

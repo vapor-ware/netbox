@@ -80,13 +80,6 @@ class TreeNodeMultipleChoiceFilter(django_filters.ModelMultipleChoiceFilter):
         return super().filter(qs, value)
 
 
-class NumericInFilter(django_filters.BaseInFilter, django_filters.NumberFilter):
-    """
-    Filters for a set of numeric values. Example: id__in=100,200,300
-    """
-    pass
-
-
 class NullableCharFieldFilter(django_filters.CharFilter):
     """
     Allow matching on null field values by passing a special string used to signify NULL.
@@ -217,9 +210,7 @@ class BaseFilterSet(django_filters.FilterSet):
         For specific filter types, new filters are created based on defined lookup expressions in
         the form `<field_name>__<lookup_expr>`
         """
-        # TODO: once 3.6 is the minimum required version of python, change this to a bare super() call
-        # We have to do it this way in py3.5 becuase of django_filters.FilterSet's use of a metaclass
-        filters = super(django_filters.FilterSet, cls).get_filters()
+        filters = super().get_filters()
 
         new_filters = {}
         for existing_filter_name, existing_filter in filters.items():

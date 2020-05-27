@@ -5,7 +5,7 @@ from dcim.models import Region, Site
 from extras.filters import CustomFieldFilterSet, CreatedUpdatedFilterSet
 from tenancy.filters import TenancyFilterSet
 from utilities.filters import (
-    BaseFilterSet, NameSlugSearchFilterSet, NumericInFilter, TagFilter, TreeNodeMultipleChoiceFilter
+    BaseFilterSet, NameSlugSearchFilterSet, TagFilter, TreeNodeMultipleChoiceFilter
 )
 from .choices import *
 from .models import Circuit, CircuitTermination, CircuitType, Provider
@@ -19,10 +19,6 @@ __all__ = (
 
 
 class ProviderFilterSet(BaseFilterSet, CustomFieldFilterSet, CreatedUpdatedFilterSet):
-    id__in = NumericInFilter(
-        field_name='id',
-        lookup_expr='in'
-    )
     q = django_filters.CharFilter(
         method='search',
         label='Search',
@@ -55,7 +51,7 @@ class ProviderFilterSet(BaseFilterSet, CustomFieldFilterSet, CreatedUpdatedFilte
 
     class Meta:
         model = Provider
-        fields = ['name', 'slug', 'asn', 'account']
+        fields = ['id', 'name', 'slug', 'asn', 'account']
 
     def search(self, queryset, name, value):
         if not value.strip():
@@ -77,10 +73,6 @@ class CircuitTypeFilterSet(BaseFilterSet, NameSlugSearchFilterSet):
 
 
 class CircuitFilterSet(BaseFilterSet, CustomFieldFilterSet, TenancyFilterSet, CreatedUpdatedFilterSet):
-    id__in = NumericInFilter(
-        field_name='id',
-        lookup_expr='in'
-    )
     q = django_filters.CharFilter(
         method='search',
         label='Search',
@@ -137,7 +129,7 @@ class CircuitFilterSet(BaseFilterSet, CustomFieldFilterSet, TenancyFilterSet, Cr
 
     class Meta:
         model = Circuit
-        fields = ['cid', 'install_date', 'commit_rate']
+        fields = ['id', 'cid', 'install_date', 'commit_rate']
 
     def search(self, queryset, name, value):
         if not value.strip():

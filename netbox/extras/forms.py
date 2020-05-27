@@ -2,13 +2,13 @@ from django import forms
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from mptt.forms import TreeNodeMultipleChoiceField
-from taggit.forms import TagField
+from taggit.forms import TagField as TagField_
 
 from dcim.models import DeviceRole, Platform, Region, Site
 from tenancy.models import Tenant, TenantGroup
 from utilities.forms import (
     add_blank_choice, APISelectMultiple, BootstrapMixin, BulkEditForm, BulkEditNullBooleanSelect, ColorSelect,
-    CommentField, ContentTypeSelect, DateTimePicker, DynamicModelMultipleChoiceField, JSONField, SlugField,
+    ContentTypeSelect, CSVModelForm, DateTimePicker, DynamicModelMultipleChoiceField, JSONField, SlugField,
     StaticSelect2, StaticSelect2Multiple, BOOLEAN_WITH_BLANK_CHOICES,
 )
 from virtualization.models import Cluster, ClusterGroup
@@ -89,7 +89,7 @@ class CustomFieldModelForm(forms.ModelForm):
         return obj
 
 
-class CustomFieldModelCSVForm(CustomFieldModelForm):
+class CustomFieldModelCSVForm(CSVModelForm, CustomFieldModelForm):
 
     def _append_customfield_fields(self):
 
@@ -142,14 +142,22 @@ class CustomFieldFilterForm(forms.Form):
 # Tags
 #
 
+class TagField(TagField_):
+
+    def widget_attrs(self, widget):
+        # Apply the "tagfield" CSS class to trigger the special API-based selection widget for tags
+        return {
+            'class': 'tagfield'
+        }
+
+
 class TagForm(BootstrapMixin, forms.ModelForm):
     slug = SlugField()
-    comments = CommentField()
 
     class Meta:
         model = Tag
         fields = [
-            'name', 'slug', 'color', 'comments'
+            'name', 'slug', 'color', 'description'
         ]
 
 
@@ -181,9 +189,13 @@ class TagBulkEditForm(BootstrapMixin, BulkEditForm):
         required=False,
         widget=ColorSelect()
     )
+    description = forms.CharField(
+        max_length=200,
+        required=False
+    )
 
     class Meta:
-        nullable_fields = []
+        nullable_fields = ['description']
 
 
 #
@@ -198,60 +210,35 @@ class ConfigContextForm(BootstrapMixin, forms.ModelForm):
     )
     sites = DynamicModelMultipleChoiceField(
         queryset=Site.objects.all(),
-        required=False,
-        widget=APISelectMultiple(
-            api_url="/api/dcim/sites/"
-        )
+        required=False
     )
     roles = DynamicModelMultipleChoiceField(
         queryset=DeviceRole.objects.all(),
-        required=False,
-        widget=APISelectMultiple(
-            api_url="/api/dcim/device-roles/"
-        )
+        required=False
     )
     platforms = DynamicModelMultipleChoiceField(
         queryset=Platform.objects.all(),
-        required=False,
-        widget=APISelectMultiple(
-            api_url="/api/dcim/platforms/"
-        )
+        required=False
     )
     cluster_groups = DynamicModelMultipleChoiceField(
         queryset=ClusterGroup.objects.all(),
-        required=False,
-        widget=APISelectMultiple(
-            api_url="/api/virtualization/cluster-groups/"
-        )
+        required=False
     )
     clusters = DynamicModelMultipleChoiceField(
         queryset=Cluster.objects.all(),
-        required=False,
-        widget=APISelectMultiple(
-            api_url="/api/virtualization/clusters/"
-        )
+        required=False
     )
     tenant_groups = DynamicModelMultipleChoiceField(
         queryset=TenantGroup.objects.all(),
-        required=False,
-        widget=APISelectMultiple(
-            api_url="/api/tenancy/tenant-groups/"
-        )
+        required=False
     )
     tenants = DynamicModelMultipleChoiceField(
         queryset=Tenant.objects.all(),
-        required=False,
-        widget=APISelectMultiple(
-            api_url="/api/tenancy/tenants/"
-        )
+        required=False
     )
     tags = DynamicModelMultipleChoiceField(
         queryset=Tag.objects.all(),
-        to_field_name='slug',
-        required=False,
-        widget=APISelectMultiple(
-            api_url="/api/extras/tags/"
-        )
+        required=False
     )
     data = JSONField(
         label=''
@@ -299,7 +286,6 @@ class ConfigContextFilterForm(BootstrapMixin, forms.Form):
         to_field_name='slug',
         required=False,
         widget=APISelectMultiple(
-            api_url="/api/dcim/regions/",
             value_field="slug",
         )
     )
@@ -308,7 +294,6 @@ class ConfigContextFilterForm(BootstrapMixin, forms.Form):
         to_field_name='slug',
         required=False,
         widget=APISelectMultiple(
-            api_url="/api/dcim/sites/",
             value_field="slug",
         )
     )
@@ -317,7 +302,6 @@ class ConfigContextFilterForm(BootstrapMixin, forms.Form):
         to_field_name='slug',
         required=False,
         widget=APISelectMultiple(
-            api_url="/api/dcim/device-roles/",
             value_field="slug",
         )
     )
@@ -326,7 +310,6 @@ class ConfigContextFilterForm(BootstrapMixin, forms.Form):
         to_field_name='slug',
         required=False,
         widget=APISelectMultiple(
-            api_url="/api/dcim/platforms/",
             value_field="slug",
         )
     )
@@ -335,24 +318,19 @@ class ConfigContextFilterForm(BootstrapMixin, forms.Form):
         to_field_name='slug',
         required=False,
         widget=APISelectMultiple(
-            api_url="/api/virtualization/cluster-groups/",
             value_field="slug",
         )
     )
     cluster_id = DynamicModelMultipleChoiceField(
         queryset=Cluster.objects.all(),
         required=False,
-        label='Cluster',
-        widget=APISelectMultiple(
-            api_url="/api/virtualization/clusters/",
-        )
+        label='Cluster'
     )
     tenant_group = DynamicModelMultipleChoiceField(
         queryset=TenantGroup.objects.all(),
         to_field_name='slug',
         required=False,
         widget=APISelectMultiple(
-            api_url="/api/tenancy/tenant-groups/",
             value_field="slug",
         )
     )
@@ -361,7 +339,6 @@ class ConfigContextFilterForm(BootstrapMixin, forms.Form):
         to_field_name='slug',
         required=False,
         widget=APISelectMultiple(
-            api_url="/api/tenancy/tenants/",
             value_field="slug",
         )
     )
@@ -370,7 +347,6 @@ class ConfigContextFilterForm(BootstrapMixin, forms.Form):
         to_field_name='slug',
         required=False,
         widget=APISelectMultiple(
-            api_url="/api/extras/tags/",
             value_field="slug",
         )
     )
@@ -456,18 +432,19 @@ class ScriptForm(BootstrapMixin, forms.Form):
 
     def __init__(self, vars, *args, commit_default=True, **kwargs):
 
-        super().__init__(*args, **kwargs)
-
         # Dynamically populate fields for variables
         for name, var in vars.items():
-            self.fields[name] = var.as_field()
+            self.base_fields[name] = var.as_field()
+
+        super().__init__(*args, **kwargs)
 
         # Toggle default commit behavior based on Meta option
         if not commit_default:
             self.fields['_commit'].initial = False
 
         # Move _commit to the end of the form
-        self.fields.move_to_end('_commit', True)
+        commit = self.fields.pop('_commit')
+        self.fields['_commit'] = commit
 
     @property
     def requires_input(self):

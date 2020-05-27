@@ -21,11 +21,11 @@ DATABASE = {
     'CONN_MAX_AGE': 300,      # Max database connection age
 }
 
-# Redis database settings. The Redis database is used for caching and background processing such as webhooks
-# Seperate sections for webhooks and caching allow for connecting to seperate Redis instances/datbases if desired.
-# Full connection details are required in both sections, even if they are the same.
+# Redis database settings. Redis is used for caching and for queuing background tasks such as webhook events. A separate
+# configuration exists for each. Full connection details are required in both sections, and it is strongly recommended
+# to use two separate database IDs.
 REDIS = {
-    'webhooks': {
+    'tasks': {
         'HOST': 'localhost',
         'PORT': 6379,
         # Comment out `HOST` and `PORT` lines and uncomment the following if using Redis Sentinel
@@ -108,6 +108,8 @@ EMAIL = {
     'PORT': 25,
     'USERNAME': '',
     'PASSWORD': '',
+    'USE_SSL': False,
+    'USE_TLS': False,
     'TIMEOUT': 10,  # seconds
     'FROM_EMAIL': '',
 }
@@ -123,6 +125,16 @@ EXEMPT_VIEW_PERMISSIONS = [
     # 'dcim.region',
     # 'ipam.prefix',
 ]
+
+# HTTP proxies NetBox should use when sending outbound HTTP requests (e.g. for webhooks).
+# HTTP_PROXIES = {
+#     'http': 'http://10.10.1.10:3128',
+#     'https': 'http://10.10.1.10:1080',
+# }
+
+# IP addresses recognized as internal to the system. The debugging toolbar will be available only to clients accessing
+# NetBox from an internal IP.
+INTERNAL_IPS = ('127.0.0.1', '::1')
 
 # Enable custom logging. Please see the Django documentation for detailed guidance on configuring custom logs:
 #   https://docs.djangoproject.com/en/stable/topics/logging/
@@ -175,9 +187,37 @@ NAPALM_ARGS = {}
 # Determine how many objects to display per page within a list. (Default: 50)
 PAGINATE_COUNT = 50
 
+# Enable installed plugins. Add the name of each plugin to the list.
+PLUGINS = []
+
+# Plugins configuration settings. These settings are used by various plugins that the user may have installed.
+# Each key in the dictionary is the name of an installed plugin and its value is a dictionary of settings.
+# PLUGINS_CONFIG = {
+#     'my_plugin': {
+#         'foo': 'bar',
+#         'buzz': 'bazz'
+#     }
+# }
+
 # When determining the primary IP address for a device, IPv6 is preferred over IPv4 by default. Set this to True to
 # prefer IPv4 instead.
 PREFER_IPV4 = False
+
+# Remote authentication support
+REMOTE_AUTH_ENABLED = False
+REMOTE_AUTH_BACKEND = 'utilities.auth_backends.RemoteUserBackend'
+REMOTE_AUTH_HEADER = 'HTTP_REMOTE_USER'
+REMOTE_AUTH_AUTO_CREATE_USER = True
+REMOTE_AUTH_DEFAULT_GROUPS = []
+REMOTE_AUTH_DEFAULT_PERMISSIONS = []
+
+# This determines how often the GitHub API is called to check the latest release of NetBox. Must be at least 1 hour.
+RELEASE_CHECK_TIMEOUT = 24 * 3600
+
+# This repository is used to check whether there is a new release of NetBox available. Set to None to disable the
+# version check or use the URL below to check for release in the official NetBox repository.
+RELEASE_CHECK_URL = None
+# RELEASE_CHECK_URL = 'https://api.github.com/repos/netbox-community/netbox/releases'
 
 # The file path where custom reports will be stored. A trailing slash is not needed. Note that the default value of
 # this setting is derived from the installed location.
