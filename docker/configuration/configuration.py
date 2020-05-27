@@ -171,6 +171,11 @@ NAPALM_ARGS = {}
 # Determine how many objects to display per page within a list. (Default: 50)
 PAGINATE_COUNT = int(os.environ.get('PAGINATE_COUNT', 50))
 
+# Plugins
+PLUGINS = [
+    'netbox_virtual_circuit_plugin',
+]
+
 # When determining the primary IP address for a device, IPv6 is preferred over IPv4 by default. Set this to True to
 # prefer IPv4 instead.
 PREFER_IPV4 = os.environ.get('PREFER_IPV4', 'False').lower() == 'true'
