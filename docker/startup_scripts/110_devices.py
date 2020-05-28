@@ -44,7 +44,14 @@ with file.open('r') as stream:
       for assoc, details in optional_assocs.items():
         if assoc in params:
           model, field = details
-          query = { field: params.pop(assoc) }
+
+          if assoc == 'rack':  # Special handling for rack query to reference rack name and site
+            query = {
+              'site': params.get('site'),
+              field: params.pop(assoc),
+            }
+          else:
+            query = { field: params.pop(assoc) }
 
           params[assoc] = model.objects.get(**query)
 
