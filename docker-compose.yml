@@ -36,7 +36,7 @@ services:
     - rqworker
   nginx:
     command: nginx -c /etc/netbox-nginx/nginx.conf
-    image: nginx
+    image: nginx:1.18
     depends_on:
     - netbox
     ports:
