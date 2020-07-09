@@ -25,7 +25,7 @@ with file.open('r') as stream:
 
           params[assoc] = model.objects.get(**query)
 
-      region, created = Region.objects.get_or_create(**params)
+      region, created = Region.objects.update_or_create(name=params['name'], defaults=params)
 
       if created:
         print("🌐 Created region", region.name)

@@ -14,7 +14,7 @@ with file.open('r') as stream:
   if tenants is not None:
     for params in tenants:
 
-      tenant, created = Tenant.objects.get_or_create(**params)
+      tenant, created = Tenant.objects.update_or_create(name=params['name'], defaults=params)
 
       if created:
         print("🏠 Created tenant", tenant.name)

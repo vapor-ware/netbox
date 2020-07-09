@@ -22,7 +22,7 @@ with file.open('r') as stream:
           if color in color_tpl:
             params['color'] = color_tpl[0]
 
-      rack_role, created = RackRole.objects.get_or_create(**params)
+      rack_role, created = RackRole.objects.update_or_create(name=params['name'], defaults=params)
 
       if created:
         print("🎨 Created rack role", rack_role.name)

@@ -29,7 +29,7 @@ with file.open('r') as stream:
 
           params[assoc] = model.objects.get(**query)
 
-      site, created = Site.objects.get_or_create(**params)
+      site, created = Site.objects.update_or_create(name=params['name'], defaults=params)
 
       if created:
         if custom_fields is not None:

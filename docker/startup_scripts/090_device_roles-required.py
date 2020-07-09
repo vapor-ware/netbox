@@ -23,7 +23,7 @@ with file.open('r') as stream:
           if color in color_tpl:
             params['color'] = color_tpl[0]
 
-      device_role, created = DeviceRole.objects.get_or_create(**params)
+      device_role, created = DeviceRole.objects.update_or_create(name=params['name'], defaults=params)
 
       if created:
         print("🎨 Created device role", device_role.name)

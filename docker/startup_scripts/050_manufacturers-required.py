@@ -13,7 +13,7 @@ with file.open('r') as stream:
 
   if manufacturers is not None:
     for params in manufacturers:
-      manufacturer, created = Manufacturer.objects.get_or_create(**params)
+      manufacturer, created = Manufacturer.objects.update_or_create(name=params['name'], defaults=params)
 
       if created:
         print("🏭 Created Manufacturer", manufacturer.name)

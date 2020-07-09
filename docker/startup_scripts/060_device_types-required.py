@@ -39,7 +39,7 @@ with file.open('r') as stream:
 
           params[assoc] = model.objects.get(**query)
 
-      device_type, created = DeviceType.objects.get_or_create(**params)
+      device_type, created = DeviceType.objects.update_or_create(model=params['model'], manufacturer=params['manufacturer'], defaults=params)
 
       if created:
         if custom_fields is not None:

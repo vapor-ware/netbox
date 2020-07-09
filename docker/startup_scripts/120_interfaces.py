@@ -17,8 +17,13 @@ def template_customer_locker(devices, port_count):
             name = '{}-{}'.format(strand0, strand1)
 
             i += 2
+            interface_data = {
+                'name': name,
+                'device': locker,
+                'type': 'keystone',
+            }
 
-            interface, created = Interface.objects.get_or_create(name=name, device=locker, type='keystone')
+            interface, created = Interface.objects.update_or_create(name=name, device=locker, defaults=interface_data)
             if created:
                 print("🔗 Created interface {} for {}".format(interface.name, locker.name))
 
@@ -29,7 +34,7 @@ def template_efr(devices, port_count):
     for switch in devices:
         i = 1
         while i <= port_count:
-            interface, created = Interface.objects.get_or_create(name=f'xe-0/0/{i}', device=switch, type='10gbase-x-sfpp')
+            interface, created = Interface.objects.update_or_create(name=f'xe-0/0/{i}', device=switch, defaults={'device': switch, 'type': '10gbase-x-sfpp'})
             i += 1
             if created:
                 print("🔗 Created interface {} for {}".format(interface.name, switch.name))

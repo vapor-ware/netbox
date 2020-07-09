@@ -40,7 +40,7 @@ with file.open('r') as stream:
 
           params[assoc] = model.objects.get(**query)
 
-      rack, created = Rack.objects.get_or_create(**params)
+      rack, created = Rack.objects.update_or_create(name=params['name'], site=params['site'], defaults=params)
 
       if created:
         if custom_fields is not None:
