@@ -1,2 +1,2 @@
 django-allauth==0.42.0
-netbox-virtual-circuit-plugin==0.2.0
+netbox-virtual-circuit-plugin==0.3.0
