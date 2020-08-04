@@ -1,18 +1,18 @@
-- name: Emulator C1 W1
-  site: Local Emulator
-  slug: w1-c1-emul8r-000
-- name: Emulator C1 W2
-  site: Local Emulator
-  slug: w2-c1-emul8r-000
-- name: Emulator C1 W3
-  site: Local Emulator
-  slug: w3-c1-emul8r-000
-- name: Emulator C1 W4
-  site: Local Emulator
-  slug: w4-c1-emul8r-000
-- name: Emulator C1 W5
-  site: Local Emulator
-  slug: w5-c1-emul8r-000
-- name: Emulator C1 W6
-  site: Local Emulator
-  slug: w6-c1-emul8r-000
+- name: Emulator C1 R1
+  site: Local Emulator (EMUL8R.000)
+  slug: r1-c1-emul8r-000
+- name: Emulator C1 R2
+  site: Local Emulator (EMUL8R.000)
+  slug: r2-c1-emul8r-000
+- name: Emulator C1 R3
+  site: Local Emulator (EMUL8R.000)
+  slug: r3-c1-emul8r-000
+- name: Emulator C1 R4
+  site: Local Emulator (EMUL8R.000)
+  slug: r4-c1-emul8r-000
+- name: Emulator C1 R5
+  site: Local Emulator (EMUL8R.000)
+  slug: r5-c1-emul8r-000
+- name: Emulator C1 R6
+  site: Local Emulator (EMUL8R.000)
+  slug: r6-c1-emul8r-000

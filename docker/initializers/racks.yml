@@ -1,144 +1,144 @@
-- facility_id: a.w1.c1.emul8r.000
-  group: Emulator C1 W1
-  name: Emulator C1 W1 Zone A
+- facility_id: a.r1.c1.emul8r.000
+  group: Emulator C1 R1
+  name: R1 Zone A
   role: Customer
-  site: Local Emulator
-  type: 4-post cabinet
+  site: Local Emulator (EMUL8R.000)
+  type: 4-post-cabinet
   u_height: '36'
   width: '19'
-- facility_id: b.w1.c1.emul8r.000
-  group: Emulator C1 W1
-  name: Emulator C1 W1 Zone B
+- facility_id: b.r1.c1.emul8r.000
+  group: Emulator C1 R1
+  name: R1 Zone B
   role: Utility
-  site: Local Emulator
-  type: 4-post cabinet
+  site: Local Emulator (EMUL8R.000)
+  type: 4-post-cabinet
   u_height: '36'
   width: '19'
-- facility_id: f.w1.c1.emul8r.000
-  group: Emulator C1 W1
-  name: Emulator C1 W1 Facility
+- facility_id: f.r1.c1.emul8r.000
+  group: Emulator C1 R1
+  name: R1 Facility
   role: Facility
-  site: Local Emulator
-  type: 4-post cabinet
+  site: Local Emulator (EMUL8R.000)
+  type: 4-post-cabinet
   u_height: '36'
   width: '19'
-- facility_id: a.w2.c1.emul8r.000
-  group: Emulator C1 W2
-  name: Emulator C1 W2 Zone A
+- facility_id: a.r2.c1.emul8r.000
+  group: Emulator C1 R2
+  name: R2 Zone A
   role: Customer
-  site: Local Emulator
-  type: 4-post cabinet
+  site: Local Emulator (EMUL8R.000)
+  type: 4-post-cabinet
   u_height: '36'
   width: '19'
-- facility_id: b.w2.c1.emul8r.000
-  group: Emulator C1 W2
-  name: Emulator C1 W2 Zone B
+- facility_id: b.r2.c1.emul8r.000
+  group: Emulator C1 R2
+  name: R2 Zone B
   role: Utility
-  site: Local Emulator
-  type: 4-post cabinet
+  site: Local Emulator (EMUL8R.000)
+  type: 4-post-cabinet
   u_height: '36'
   width: '19'
-- facility_id: f.w2.c1.emul8r.000
-  group: Emulator C1 W2
-  name: Emulator C1 W2 Facility
+- facility_id: f.r2.c1.emul8r.000
+  group: Emulator C1 R2
+  name: R2 Facility
   role: Facility
-  site: Local Emulator
-  type: 4-post cabinet
+  site: Local Emulator (EMUL8R.000)
+  type: 4-post-cabinet
   u_height: '36'
   width: '19'
-- facility_id: a.w3.c1.emul8r.000
-  group: Emulator C1 W3
-  name: Emulator C1 W3 Zone A
+- facility_id: a.r3.c1.emul8r.000
+  group: Emulator C1 R3
+  name: R3 Zone A
   role: Customer
-  site: Local Emulator
-  type: 4-post cabinet
+  site: Local Emulator (EMUL8R.000)
+  type: 4-post-cabinet
   u_height: '36'
   width: '19'
-- facility_id: b.w3.c1.emul8r.000
-  group: Emulator C1 W3
-  name: Emulator C1 W3 Zone B
+- facility_id: b.r3.c1.emul8r.000
+  group: Emulator C1 R3
+  name: R3 Zone B
   role: Utility
-  site: Local Emulator
-  type: 4-post cabinet
+  site: Local Emulator (EMUL8R.000)
+  type: 4-post-cabinet
   u_height: '36'
   width: '19'
-- facility_id: f.w3.c1.emul8r.000
-  group: Emulator C1 W3
-  name: Emulator C1 W3 Facility
+- facility_id: f.r3.c1.emul8r.000
+  group: Emulator C1 R3
+  name: R3 Facility
   role: Facility
-  site: Local Emulator
-  type: 4-post cabinet
+  site: Local Emulator (EMUL8R.000)
+  type: 4-post-cabinet
   u_height: '36'
   width: '19'
-- facility_id: a.w4.c1.emul8r.000
-  group: Emulator C1 W4
-  name: Emulator C1 W4 Zone A
+- facility_id: a.r4.c1.emul8r.000
+  group: Emulator C1 R4
+  name: R4 Zone A
   role: Customer
-  site: Local Emulator
-  type: 4-post cabinet
+  site: Local Emulator (EMUL8R.000)
+  type: 4-post-cabinet
   u_height: '36'
   width: '19'
-- facility_id: b.w4.c1.emul8r.000
-  group: Emulator C1 W4
-  name: Emulator C1 W4 Zone B
+- facility_id: b.r4.c1.emul8r.000
+  group: Emulator C1 R4
+  name: R4 Zone B
   role: Utility
-  site: Local Emulator
-  type: 4-post cabinet
+  site: Local Emulator (EMUL8R.000)
+  type: 4-post-cabinet
   u_height: '36'
   width: '19'
-- facility_id: f.w4.c1.emul8r.000
-  group: Emulator C1 W4
-  name: Emulator C1 W4 Facility
+- facility_id: f.r4.c1.emul8r.000
+  group: Emulator C1 R4
+  name: R4 Facility
   role: Facility
-  site: Local Emulator
-  type: 4-post cabinet
+  site: Local Emulator (EMUL8R.000)
+  type: 4-post-cabinet
   u_height: '36'
   width: '19'
-- facility_id: a.w5.c1.emul8r.000
-  group: Emulator C1 W5
-  name: Emulator C1 W5 Zone A
+- facility_id: a.r5.c1.emul8r.000
+  group: Emulator C1 R5
+  name: R5 Zone A
   role: Customer
-  site: Local Emulator
-  type: 4-post cabinet
+  site: Local Emulator (EMUL8R.000)
+  type: 4-post-cabinet
   u_height: '36'
   width: '19'
-- facility_id: b.w5.c1.emul8r.000
-  group: Emulator C1 W5
-  name: Emulator C1 W5 Zone B
+- facility_id: b.r5.c1.emul8r.000
+  group: Emulator C1 R5
+  name: R5 Zone B
   role: Utility
-  site: Local Emulator
-  type: 4-post cabinet
+  site: Local Emulator (EMUL8R.000)
+  type: 4-post-cabinet
   u_height: '36'
   width: '19'
-- facility_id: f.w5.c1.emul8r.000
-  group: Emulator C1 W5
-  name: Emulator C1 W5 Facility
+- facility_id: f.r5.c1.emul8r.000
+  group: Emulator C1 R5
+  name: R5 Facility
   role: Facility
-  site: Local Emulator
-  type: 4-post cabinet
+  site: Local Emulator (EMUL8R.000)
+  type: 4-post-cabinet
   u_height: '36'
   width: '19'
-- facility_id: a.w6.c1.emul8r.000
-  group: Emulator C1 W6
-  name: Emulator C1 W6 Zone A
+- facility_id: a.r6.c1.emul8r.000
+  group: Emulator C1 R6
+  name: R6 Zone A
   role: Customer
-  site: Local Emulator
-  type: 4-post cabinet
+  site: Local Emulator (EMUL8R.000)
+  type: 4-post-cabinet
   u_height: '36'
   width: '19'
-- facility_id: b.w6.c1.emul8r.000
-  group: Emulator C1 W6
-  name: Emulator C1 W6 Zone B
+- facility_id: b.r6.c1.emul8r.000
+  group: Emulator C1 R6
+  name: R6 Zone B
   role: Utility
-  site: Local Emulator
-  type: 4-post cabinet
+  site: Local Emulator (EMUL8R.000)
+  type: 4-post-cabinet
   u_height: '36'
   width: '19'
-- facility_id: f.w6.c1.emul8r.000
-  group: Emulator C1 W6
-  name: Emulator C1 W6 Facility
+- facility_id: f.r6.c1.emul8r.000
+  group: Emulator C1 R6
+  name: R6 Facility
   role: Facility
-  site: Local Emulator
-  type: 4-post cabinet
+  site: Local Emulator (EMUL8R.000)
+  type: 4-post-cabinet
   u_height: '36'
   width: '19'
