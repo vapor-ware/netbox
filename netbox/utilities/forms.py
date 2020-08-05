@@ -7,7 +7,7 @@ import django_filters
 import yaml
 from django import forms
 from django.conf import settings
-from django.contrib.postgres.forms.jsonb import JSONField as _JSONField, InvalidJSONInput
+from django.contrib.postgres.forms.jsonb import JSONField as _JSONField
 from django.core.exceptions import MultipleObjectsReturned
 from django.db.models import Count
 from django.forms import BoundField
@@ -26,6 +26,10 @@ BOOLEAN_WITH_BLANK_CHOICES = (
     ('True', 'Yes'),
     ('False', 'No'),
 )
+
+
+class InvalidJSONInput(str):
+    pass
 
 
 def parse_numeric_range(string, base=10):
