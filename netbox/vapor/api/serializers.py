@@ -57,7 +57,7 @@ class NestedVaporVLANSerializer(WritableNestedSerializer):
 
     class Meta:
         model = VLAN
-        fields = ['id', 'url', 'vid', 'name', 'display_name', 'prefixes']
+        fields = ['id', 'url', 'vid', 'name', 'display_name', 'prefixes', 'status']
 
 
 class NestedVLANInterfaceSerializer(WritableNestedSerializer):
