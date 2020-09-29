@@ -19,6 +19,8 @@ from utilities.api import ChoiceField, ValidatedModelSerializer, SerializedPKRel
 from tenancy.models import Tenant as Customer
 from utilities.utils import dynamic_import
 
+from netbox_virtual_circuit_plugin.models import VirtualCircuitVLAN, VirtualCircuit
+
 
 def get_serializer_for_model(model, prefix=''):
     """
@@ -45,6 +47,17 @@ def get_serializer_for_model(model, prefix=''):
         )
 
 
+class NestedVirtualCircuitSerializer(ValidatedModelSerializer):
+    vcid = serializers.ReadOnlyField(source='virtual_circuit.vcid')
+    name = serializers.ReadOnlyField(source='virtual_circuit.name')
+    status = serializers.ReadOnlyField(source='virtual_circuit.status')
+    context = serializers.ReadOnlyField(source='virtual_circuit.context')
+
+    class Meta:
+        model = VirtualCircuit
+        fields = ['vcid', 'name', 'status', 'context']
+
+
 class NestedVaporVLANSerializer(WritableNestedSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='ipam-api:vlan-detail')
 
@@ -55,9 +68,18 @@ class NestedVaporVLANSerializer(WritableNestedSerializer):
         many=True,
     )
 
+    virtual_circuit = SerializedPKRelatedField(
+        source='vlan_of',
+        queryset=VirtualCircuitVLAN.objects.all(),
+        serializer=NestedVirtualCircuitSerializer,
+        pk_field='vlan',
+        required=False,
+        many=False,
+    )
+
     class Meta:
         model = VLAN
-        fields = ['id', 'url', 'vid', 'name', 'display_name', 'prefixes', 'status']
+        fields = ['id', 'url', 'vid', 'name', 'display_name', 'prefixes', 'status', 'virtual_circuit']
 
 
 class NestedVLANInterfaceSerializer(WritableNestedSerializer):

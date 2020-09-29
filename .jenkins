@@ -81,6 +81,7 @@ spec:
               sed -i -e "s/SECRET_KEY = .*/SECRET_KEY = 'netboxci'/g" configuration.py
               sed -i -e "s/USER': .*/USER': 'netbox',/g" configuration.py
               sed -i -e "s/PASSWORD': .*/PASSWORD': 'netbox',/g" configuration.py
+              sed -i -e "s/PLUGINS = .*/PLUGINS = ['netbox_virtual_circuit_plugin']/g" configuration.py
             """
           }
           // finally, kick off tox to run the entire test suite
