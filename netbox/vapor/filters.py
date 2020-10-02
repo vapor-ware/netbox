@@ -4,11 +4,13 @@ from django.db.models import Q
 from extras.filters import CustomFieldFilterSet
 from utilities.filters import NameSlugSearchFilterSet, TagFilter, MultiValueNumberFilter
 from tenancy.models import Tenant, TenantGroup
-from dcim.models import Site, Device, DeviceRole, Interface
+from dcim.models import Site, Device, DeviceRole, Interface, Region
 from dcim.choices import (
     InterfaceTypeChoices,
 )
 from dcim.filters import MultiValueMACAddressFilter
+
+from netbox_virtual_circuit_plugin.models import VirtualCircuit
 
 
 class CustomerFilter(CustomFieldFilterSet):
@@ -115,6 +117,34 @@ class InterfaceFilter(django_filters.FilterSet):
         queryset=Tenant.objects.all(),
         to_field_name='slug',
         label='Customer (slug)',
+    )
+
+    market = django_filters.ModelMultipleChoiceFilter(
+        field_name='device__site__region__slug',
+        queryset=Region.objects.all(),
+        to_field_name='slug',
+        label='Region (slug)',
+    )
+
+    vc_context = django_filters.ModelMultipleChoiceFilter(
+        field_name='tagged_vlans__vlan_of__virtual_circuit__context',
+        queryset=VirtualCircuit.objects.all(),
+        to_field_name='context',
+        label='Virtual Circuit (context)',
+    )
+
+    vc_name = django_filters.ModelMultipleChoiceFilter(
+        field_name='tagged_vlans__vlan_of__virtual_circuit__name',
+        queryset=VirtualCircuit.objects.all(),
+        to_field_name='name',
+        label='Virtual Circuit (name)',
+    )
+
+    vc_id = django_filters.ModelMultipleChoiceFilter(
+        field_name='tagged_vlans__vlan_of__virtual_circuit__vcid',
+        queryset=VirtualCircuit.objects.all(),
+        to_field_name='vcid',
+        label='Virtual Circuit (vcid)',
     )
 
     class Meta:
