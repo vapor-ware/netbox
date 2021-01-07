@@ -1,7 +1,7 @@
 
 - name: Local Emulator (EMUL8R.000)
   slug: EMUL8R-000
-  region: GCP (GCP)
+  region: 000 (000)
   status: active
   custom_fields:
     sf_id: 51f4ca13-2658-4169-8a06-51f87d62b16f
