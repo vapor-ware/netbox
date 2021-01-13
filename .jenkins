@@ -57,13 +57,6 @@ spec:
     args:
     - --appendonly yes
     - --requirepass netbox
-  nodeSelector:
-    cloud.google.com/gke-nodepool: jenkins
-  tolerations:
-  - key: role
-    operator: Equal
-    value: jenkins
-    effect: NoSchedule
 """
         }
       }
