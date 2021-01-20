@@ -128,7 +128,6 @@ class InterfaceFilter(django_filters.FilterSet):
 
     vc_context = django_filters.ModelMultipleChoiceFilter(
         field_name='tagged_vlans__vlan_of__virtual_circuit__context',
-        queryset=VirtualCircuit.objects.all(),
         to_field_name='context',
         label='Virtual Circuit (context)',
     )
